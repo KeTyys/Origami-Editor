@@ -1,3 +1,8 @@
+/*
+- Links up all menu buttons with event handlers
+- Defines form input validation, importing crease patterns
+- Includes print function for debugging
+*/
 import { vertexObj, edgeObj, assignObj, envVar } from "./index.js"
 import { generateId } from "./helper.js"
 import { generateGrid, toggleGrid } from "./Grid.js"
@@ -55,22 +60,40 @@ function initialiseForm() {
     }
 
     async function render() {
-        const segInput = document.querySelector('#segment')
-        const strInput = document.querySelector('#stroke')
-        const toggleGridInput = document.querySelector('#gridline')
+        const segInput = document.querySelector('#segment');
+        const strInput = document.querySelector('#stroke');
+        const toggleGridInput = document.querySelector('#gridline');
+        const gridTypeInput = document.querySelector('#gridType'); // Get the grid type input
+        
         if (segInput.checkValidity()) {
-            envVar.segment = segInput.value
+            envVar.segment = segInput.value;
         }
         if (strInput.checkValidity()) {
-            envVar.strokeWidth = strInput.value
+            envVar.strokeWidth = strInput.value;
         }
-        envVar.gridlines = toggleGridInput.checked
-        
-        generateGrid()
-        toggleGrid()
-        resetScreen()
-        drawPattern()
+        envVar.gridlines = toggleGridInput.checked;
+        envVar.gridType = gridTypeInput.value; // Set selected grid type
+    
+        generateGrid();
+        toggleGrid();
+        resetScreen();
+        drawPattern();
     }
+    
+    const diagonalLinesInput = document.querySelector('#diagonalLines');
+    diagonalLinesInput.addEventListener('change', () => {
+        envVar.diagonalLines = diagonalLinesInput.checked;
+        render(); // Re-render grid to apply the changes
+    });
+    
+
+    // Adding event listener for grid type changes
+    document.addEventListener('DOMContentLoaded', () => {
+        const gridTypeInput = document.querySelector('#gridType');
+        gridTypeInput.addEventListener('change', render); // Re-render grid on type change
+    });
+
+    
 
     async function handleSubmit(e) {
         e.preventDefault()

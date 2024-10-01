@@ -1,3 +1,10 @@
+/*
+- basic helper functions for dealing with strings, arrays, objects (generateId, inArray, exists, getCoordId, parseLength)
+- functions for manipulating dom elements (clearChildren, clearListeners)
+- functions for making comparisons(exact, equalVal, equalLine, onLine, ontop, within etc)
+- functions for dealing with geometry (dot, minus, clamp, times, plus, grad, grad2, midPoint, distTo)
+- functions that make use of geometric functions to get coordinates / lines (closest, intersect, acrossPts, bisectPts, bisectAngle, cutLine, bisectLines, cutPoint)
+*/
 import { envVar, vertexObj } from "./index.js";
 
 export function generateId(obj) {
@@ -10,11 +17,11 @@ export function generateId(obj) {
 
 // checks if value exists in object
 export function exists(obj, val) {
-    return Object.values(obj).filter(v => JSON.stringify(v) == JSON.stringify(val)).length != 0
+    return Object.values(obj).some(v => JSON.stringify(v) === JSON.stringify(val));
 }
 
 export function inArray(arr, obj) {
-    return arr.filter(v => JSON.stringify(v) == JSON.stringify(obj)).length != 0
+    return arr.some(v => JSON.stringify(v) === JSON.stringify(obj));
 }
 
 // find id of coord in vertexObj. 
@@ -36,31 +43,36 @@ export function getKey(obj, val) {
 
 // Gets input string with length units (px, rem .etc) and returns a float
 export function parseLength(str) {
-    let parsedStr = str.replace(/\D\-/g, "")
-    return parseFloat(parsedStr)
+    return parseFloat(str.replace(/[^\d.-]/g, ""));
 }
 
 
 // Mitigate floating point errors
 export function exact(number) {
     if (number > 0 && Math.log(number) > 30) {
-        return Infinity
+        return Infinity;
     } else if (number < 0 && Math.log(number) > 30) {
-        return -Infinity
+        return -Infinity;
     }
-    // return parseFloat(parseFloat(number).toPrecision(12))
-    return Math.round(number * Math.pow(10, 12)) / Math.pow(10, 12)
+    return parseFloat(number.toFixed(12));
 }
+
  // Empty out the children of an element
 export function clearChildren(elem) {
     elem.innerHTML = ''
 }
 
 //removes all event listeners from element
+// helper.js
 export function removeListeners(elem) {
-    let newElem = elem.cloneNode(true)
-    elem.parentNode.replaceChild(newElem, elem)
+    if (elem && elem.parentNode) {
+        let newElem = elem.cloneNode(true); // Clone the element to remove listeners
+        elem.parentNode.replaceChild(newElem, elem); // Replace with the cloned element
+    } else {
+        console.warn('Element or its parent does not exist:', elem); // Warn if element or parent is missing
+    }
 }
+
 
 /*
 Math functions

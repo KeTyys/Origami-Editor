@@ -1,3 +1,8 @@
+/*
+- manages history (an array of 3 objects (vertex, edge, assign) and the current index to point to)
+Circle, Line, SVG, Vertex.js
+- constructor methods for creating various svg elements (will prolly consolidate into one file)
+*/
 import { vertexObj, edgeObj, assignObj, editObjs } from "./index.js";
 
 let history

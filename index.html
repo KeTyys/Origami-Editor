@@ -66,12 +66,22 @@
                     <label for="file">Import file</label>
                     <div class="flex gap-2">
                         <input type="file" accept=".fold, .json, .cp" id="file">
+                    </div>
+                    <div class="flex gap-2">
                         <button id="clearfile">Clear</button>
                     </div>
                     <button type="button" id="export">Export</button>
                 </fieldset>
 
             </form>
+            <label for="gridType">Grid Type:</label>
+            <select id="gridType">
+                <option value="square">Square</option>
+                <option value="isometric">Isometric</option>
+                <option value="triangular">Triangular</option>
+            </select>
+            <label for="diagonalLines">Add Diagonal Lines</label>
+            <input type="checkbox" id="diagonalLines">
         </div>
         <div class="bg-slate-100 flex grow justify-center items-center relative" id="display">
             <svg class="relative" id="interface" x="600" y ="0" viewBox="-50 -50 700 700" oncontextmenu="javascript:return false;"
@@ -90,6 +100,11 @@
                 </g>
                 <g id="selectors"></g>
                 <g id="markers"></g>
+                <defs>
+                    <clipPath id="gridClip">
+                        <rect x="0" y="0" width="600" height="600" />
+                    </clipPath>
+                </defs>                
             </svg>
             <div id="pointerDisplay" class="bg-slate-200 absolute right-0 top-0 p-2 flex gap-2 pointer-events-none"> 
                 <div class="text-base font-bold" id="pointerX">x: 0</div>

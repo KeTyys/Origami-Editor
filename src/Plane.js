@@ -647,67 +647,72 @@ function setDrawTool() {
     }
 
     function snapPointer(e) { 
-        e.preventDefault()
-        let pointerPosition = getPointFromEvent(e)
-        let x = pointerPosition.x
-        let y = envVar.height - pointerPosition.y
-        let cursorCoord = [x, y]
+        e.preventDefault();
+        const pointer = document.querySelector('#pointer');
+        let pointerPosition = getPointFromEvent(e);
+        let x = pointerPosition.x;
+        let y = envVar.height - pointerPosition.y;
+        let cursorCoord = [x, y];
         let snapToVert = false;
-
-        // find min distance to any edge
-        // find coordinates and edge of min distance
-        let distEdgeMap = {}
-        let coordEdgeMap = {}
-        for (let lineElem of plane.children) {
-            let x1 = lineElem.x1.baseVal.value
-            let x2 = lineElem.x2.baseVal.value
-            let y1 = envVar.height - lineElem.y1.baseVal.value
-            let y2 = envVar.height - lineElem.y2.baseVal.value
-            let closestCoord = closest(x1, y1, x2, y2, cursorCoord)
-            distEdgeMap[distTo(closestCoord, cursorCoord)] = closestCoord
-            coordEdgeMap[closestCoord] = [[x1, y1], [x2, y2]]
-        }
-        let minDistToLine = Math.min.apply(null, Object.keys(distEdgeMap))
-
-        if (minDistToLine < 10) {
-            cursorCoord = distEdgeMap[minDistToLine]
-        }
-
-        // find min distance to any grid vertex or edge vertex
-        // consider grid vertices only if gridlines are enabled
-        let distPtMap = {}
+    
+        // Create array to store distances to all potential snap points
+        let distPtMap = {};
         if (envVar.gridlines) {
+            // Consider all vertices for snapping
             for (let gridVertex of envVar.gridVertices) {
-                distPtMap[distTo(cursorCoord, gridVertex)] = gridVertex
+                let distance = distTo(cursorCoord, gridVertex);
+                distPtMap[distance] = gridVertex;
             }
         }
-        for (let vertex of Object.values(vertexObj)) {
-            let scaledVertex = scaleUpCoords(vertex)
-            distPtMap[distTo(cursorCoord, scaledVertex)] = scaledVertex
+    
+        // Find the closest snap point, adjusting the threshold as needed
+        let minDistToVert = Math.min(...Object.keys(distPtMap).map(Number));
+        let closestCoord = distPtMap[minDistToVert];
+    
+        if (minDistToVert < 6) {  
+            cursorCoord = closestCoord;
+            snapToVert = true;
         }
-        let minDistToVert = Math.min.apply(null, Object.keys(distPtMap))
-        let verticeCoord = distPtMap[minDistToVert]
+    
+        // Update pointer position and styling
+        let newX = cursorCoord[0];
+        let newY = envVar.height - cursorCoord[1];
+        pointer.style.display = 'block';
+        pointer.style.transform = `translate(${newX}px, ${newY}px)`;
+        pointer.classList.toggle('with-border', snapToVert);
+    }
+    
+    
+    
+    
+/*
+function addLineIntersectionsToSnapCoords(distPtMap, cursorCoord) {
+    // Collect all lines on the plane
+    const lines = Array.from(document.querySelector("#plane").children);
+    
+    // Iterate over pairs of lines to find intersections
+    for (let i = 0; i < lines.length; i++) {
+        for (let j = i + 1; j < lines.length; j++) {
+            let line1 = lines[i];
+            let line2 = lines[j];
 
-        // snap to closest vertex if vertex is on any edge
-        if (minDistToVert < 5) {
-            cursorCoord = verticeCoord
-            snapToVert = true
-        } else {
-            snapToVert = false
-        }
+            // Calculate intersection point between two lines
+            let intersection = intersect(
+                [[line1.x1.baseVal.value, envVar.height - line1.y1.baseVal.value],
+                [line1.x2.baseVal.value, envVar.height - line1.y2.baseVal.value]],
+                [[line2.x1.baseVal.value, envVar.height - line2.y1.baseVal.value],
+                [line2.x2.baseVal.value, envVar.height - line2.y2.baseVal.value]]
+            );
 
-        let newX = cursorCoord[0]
-        let newY = envVar.height - cursorCoord[1]
-
-        // update pointer position and styling
-        pointer.style.display = 'block'
-        pointer.style.transform = `translate(${newX}px, ${newY}px)`
-        if (snapToVert) {
-            pointer.classList.add('with-border')
-        } else {
-            pointer.classList.remove('with-border')
+            // If there is a valid intersection, add it to the snapping points
+            if (intersection) {
+                distPtMap[distTo(intersection, cursorCoord)] = intersection;
+            }
         }
     }
+}
+*/
+    
 
     function removePointer(e) {
         e.preventDefault();
