@@ -2,90 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Origami Editor</title>
-    <script src="./src/index.js" type="module" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Origam.io</title>
     <script src="https://edemaine.github.io/fold/dist/fold.js"></script>
+    <script src="./src/index.js" type="module" defer></script>
+    <link rel="icon" href="./public/logo.svg" sizes="48x48">
     <link href="./src/output.css" rel="stylesheet">
 </head>
 <body style="touch-action: none">
-    <div class="flex h-screen">
-        <div class="w-80" id="sidebar">
-            <form id="menu" class=" flex flex-col gap-2 p-2">
-                <fieldset class="flex flex-col gap-2">
-                    <legend>Grid settings</legend>
-                    <div class="flex gap-2">
-                        <label for="#segment">Segments</label>
-                        <input type="number" id="segment">
-                    </div>
-                    <div class="flex gap-2">
-                        <label for="#stroke">Line stroke</label>
-                        <input type="number" id="stroke">
-                    </div>
-                    <div class="flex gap-2">
-                        <label for="#gridline">Toggle gridlines</label>
-                        <input type="checkbox" id="gridline" checked>
-                    </div>
-                    <!-- <div class="flex gap-2">
-                        <label for="#gridline">Toggle flat foldability</label>
-                        <input type="checkbox" id="flat">
-                    </div> -->
-                </fieldset>
-               
-                <fieldset class="flex flex-col gap-2">
-                    <legend>Tools</legend>
-                    <div class="flex gap-2">
-                        <button id="draw" disabled="true">Draw</button>
-                        <button id="bisector">Bisect</button>
-                        <button id="cut">Cut</button>
-                        <button id="delete">Delete</button>
-                        <button id="suggest">Suggest</button>
-                    </div>
-                    <div class="flex gap-2">
-                        <label for="edgeType">Edge type</label>
-                        <select id="edgeType" name="edgeType">
-                            <option value="M" selected>Mountain</option>
-                            <option value="V">Valley</option>
-                            <option value="U">Unassigned</option>
-                            <option value="F">Flat</option>
-                            <option value="B">Border</option>
-                        </select>
-                    </div>
-                </fieldset>
-                <div class="flex gap-2">
-                    <button id="print">Print obj</button>
-                    <button id="viewbox">Reset SVG position</button>
-                </div>
-                <div class="flex gap-2">
-                    <button id="save">Save</button>
-                    <button id="clearsave">Clear save</button>
-                </div>
-
-                <fieldset class="flex flex-col gap-2">
-                    <legend>Import / Export</legend>
-                    <label for="file">Import file</label>
-                    <div class="flex gap-2">
-                        <input type="file" accept=".fold, .json, .cp" id="file">
-                    </div>
-                    <div class="flex gap-2">
-                        <button id="clearfile">Clear</button>
-                    </div>
-                    <button type="button" id="export">Export</button>
-                </fieldset>
-
-            </form>
-            <label for="gridType">Grid Type:</label>
-            <select id="gridType">
-                <option value="square">Square</option>
-                <option value="isometric">Isometric</option>
-                <option value="triangular">Triangular</option>
-            </select>
-            <label for="diagonalLines">Add Diagonal Lines</label>
-            <input type="checkbox" id="diagonalLines">
+    <div id="root">
+        <div id="header">
+            <div class="flex gap-2 items-center flex-wrap">
+                <img id="logo" src="./public/logo.svg" alt="Origam.io logo" class="max-h-[40px] w-auto">
+                <div id="filename" class="text-sm md:text-base"></div>
+            </div>
+            <div id="pointerDisplay" class="hidden md:flex self-center gap-2 px-8 py-2 pointer-events-none"> 
+                <div class="text-base font-bold" id="pointerX">x: 0</div>
+                <div class="text-base font-bold" id="pointerY">y: 0</div>
+            </div>
         </div>
-        <div class="bg-slate-100 flex grow justify-center items-center relative" id="display">
-            <svg class="relative" id="interface" x="600" y ="0" viewBox="-50 -50 700 700" oncontextmenu="javascript:return false;"
-            preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 100%;"
+        <div id="menu-container"></div>
+        <div id="display">
+            <svg class="relative" id="interface" viewBox="-50 -10 700 700" oncontextmenu="javascript:return false;"
+            preserveAspectRatio="xMidYMid meet"
             >
                 <g id ="paper">
                     <polygon points="0,0 0,600 600,600 600,0" fill="#e2e8f0" stroke-linejoin="round"></polygon>
@@ -95,75 +34,251 @@
                 <g id="plane"></g>
                 <g id="screen">
                     <polygon points="-50,-50 -50,700 700,700 700,-50" fill-opacity="0" stroke-linejoin="round"></polygon>
-                    <circle id="pointer" r="6" cx="0" cy="0" style="position:absolute; fill:red; display:none; pointer-events: none;"
-                    ></circle>
                 </g>
+                <circle id="pointer" r="6" cx="0" cy="0" style="position:absolute; fill:red; display:none; pointer-events: none;"
+                ></circle>
                 <g id="selectors"></g>
                 <g id="markers"></g>
-                <defs>
-                    <clipPath id="gridClip">
-                        <rect x="0" y="0" width="600" height="600" />
-                    </clipPath>
-                </defs>                
             </svg>
-            <div id="pointerDisplay" class="bg-slate-200 absolute right-0 top-0 p-2 flex gap-2 pointer-events-none"> 
-                <div class="text-base font-bold" id="pointerX">x: 0</div>
-                <div class="text-base font-bold" id="pointerY">y: 0</div>
+        </div>
+        <div class="toolbar" id="toolbar">
+            <div class="bg-tertiary p-1 md:p-2 rounded-2xl flex gap-1 md:gap-2 shadow" id="tools">
+                <div class="tool-button w-[40px] h-[40px] md:w-[50px] md:h-[50px]" id="draw">
+                    <img src="./public/draw.svg" alt="Draw icon">
+                </div>
+                <div class="tool-button" id="bisect">
+                    <img src="./public/bisect.svg" alt="Bisect icon">
+                </div>
+                <div class="tool-button" id="cut">
+                    <img src="./public/fold.svg" alt="Cut icon">
+                </div>
+                <div class="tool-button" id="delete">
+                    <img src="./public/delete.svg" alt="Delete icon">
+                </div>
+                <div class="tool-button" id="suggest">
+                    <img src="./public/suggest.svg" alt="Suggest icon">
+                </div>
+            </div>
+            <div class="relative h-[40px] w-[40px] md:h-[50px] md:w-[50px]">
+                <svg id="edgeTypeMenu" width="150" height="150" class="centralise" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none">
+                    <g class="edge-type cursor-pointer">
+                        <path d="M30.9161 14.3237C43.7297 5.01412 59.1616 -1.38464e-06 75 0L75 45C68.6646 45 62.4919 47.0056 57.3664 50.7295L30.9161 14.3237Z" class="valley"/>
+                        <text fill="#ffffff" font-size="16" font-weight="bold" font-family="Roboto, Arial, Helvetica, sans-serif" x="53" y="30">V</text>
+                    </g>
+                    <g class="edge-type cursor-pointer">
+                        <path d="M75 0C90.8385 1.38464e-06 106.27 5.01412 119.084 14.3237L92.6336 50.7295C87.5081 47.0056 81.3354 45 75 45L75 0Z" class="unassigned"/>
+                        <text fill="#ffffff" font-size="16" font-weight="bold" font-family="Roboto, Arial, Helvetica, sans-serif" x="86" y="30">U</text>
+                    </g>
+                    <g class="edge-type cursor-pointer">
+                        <path d="M119.084 14.3237C131.897 23.6333 141.435 36.7605 146.329 51.8237L103.532 65.7295C101.574 59.7042 97.759 54.4533 92.6336 50.7295L119.084 14.3237Z" class="flat"/>
+                        <text fill="#ffffff" font-size="16" font-weight="bold" font-family="Roboto, Arial, Helvetica, sans-serif" x="113" y="50">F</text>
+                    </g>
+                    <g class="edge-type cursor-pointer">
+                        <path d="M146.329 51.8237C151.224 66.887 151.224 83.113 146.329 98.1763L103.532 84.2705C105.489 78.2452 105.489 71.7548 103.532 65.7295L146.329 51.8237Z" class="border"/>
+                    <text fill="#ffffff" font-size="16" font-weight="bold" font-family="Roboto, Arial, Helvetica, sans-serif" x="124" y="81">B</text>
+                </g>
+                </svg>
+                <svg width="50" height="50" viewBox="0 0 50 50" id="currEdgeType" class="edge-type relative cursor-pointer">
+                    <rect width="50" height="50" rx="25" class="mountain"/>
+                    <text fill="#ffffff" font-size="16" font-weight="bold" font-family="Roboto, Arial, Helvetica, sans-serif" x="25" y="31" text-anchor="middle">M</text>
+                </svg>
+            </div>
+    </div>
+    <div class="w-full h-full absolute left-0 top-0 z-50 invisible" id="overlay">
+        <div class = "h-full w-full absolute bg-scrim" id="overlayBg"></div>
+        <form id ="exportForm" class="absolute px-4 md:px-24 py-8 md:py-12 rounded-2xl bg-white flex flex-col gap-4 md:gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible w-[95%] md:w-auto" action="submit">
+            <img id="export-close" width="24px" height="24px" class="absolute right-3 top-3 cursor-pointer" src="./public/close.svg" alt="close button">
+            <div id="exportTitle" class="heading">Export Window</div>
+            <div id="exportBody" class="flex flex-col md:flex-row gap-4 md:gap-6">
+                <div id="exportLeft" class="flex grow flex-col gap-2 basis-1/2">
+                    <div class="flex gap-2 justify-between items-center">
+                        <label for="fileTitle">File title:</label>
+                        <input id="fileTitle" type="text" required>
+                    </div>
+                    <div class="flex gap-2 justify-between items-center">
+                        <label for="fileAuthor">File author:</label>
+                        <input id="fileAuthor" type="text">
+                    </div>
+                    <div class="flex gap-2 justify-between items-center">
+                        <label for="fileCreator">File creator:</label>
+                        <input id="fileCreator" type="text">
+                    </div>
+                    <div class="flex gap-2 justify-between w-max items-center">
+                        <label for="fileSpec">File specifications:</label>
+                        <input id="fileSpec" type="text" value="specs">
+                    </div>
+                    <fieldset id="fileClasses">
+                        <legend>File classes: </legend>
+                        <div class="flex gap-2">
+                            <input id="singleModel" name="fileClasses" value="singleModel" type="checkbox">
+                            <label for="singleModel">Single Model</label>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="multiModel" name="fileClasses" value="multiModel" type="checkbox">
+                            <label for="multiModel">Multi Model</label>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="animation" name="fileClasses" value="animation" type="checkbox">
+                            <label for="animation">Animation</label>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="diagrams" name="fileClasses" value="diagrams" type="checkbox">
+                            <label for="diagrams">Diagrams</label>
+                        </div>
+                        <!-- <div class="flex gap-2">
+                            <input id="others" name="fileClasses" type="checkbox">
+                            <input id="othersInput" type="text">
+                        </div> -->
+                    </fieldset>
+                </div>
+                <div id="exportRight" class="flex grow gap-2 basis-1/2">
+                    <div id="preview" class="w-[300px] h-[300px] outline-black bg-white"></div>
+                </div>
+            </div>
+            <button type="submit" id="exportBtn" class="button-filled w-max">Export</button>
+        </form>
+        <div id="preferences" class="absolute px-24 py-12 rounded-2xl bg-white flex gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible">
+            <img id="pref-close" width="24px" class="absolute right-3 top-3 cursor-pointer" src="./public/close.svg" alt="close button">
+            <div id="pref-left" class="flex flex-col p-2">
+                <div class="pref-section selected">Display</div>
+                <div class="pref-section">
+                    <h3>Reflection Tool</h3>
+                    <div class="pref-field">
+                        <label for="sourceQuadrant">Source Quadrant:</label>
+                        <select id="sourceQuadrant">
+                            <option value="1">Quadrant I</option>
+                            <option value="2">Quadrant II</option>
+                            <option value="3">Quadrant III</option>
+                            <option value="4">Quadrant IV</option>
+                        </select>
+                    </div>
+                    <div class="pref-field">
+                        <label for="targetQuadrant">Target Quadrant:</label>
+                        <select id="targetQuadrant">
+                            <option value="1">Quadrant I</option>
+                            <option value="2">Quadrant II</option>
+                            <option value="3">Quadrant III</option>
+                            <option value="4">Quadrant IV</option>
+                        </select>
+                    </div>
+                    <div class="pref-field">
+                        <button type="button" id="reflectButton" class="btn">Reflect</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-6">
+                <div class="bg-black h-full w-0.5 rounded-full"></div>
+                <div id="pref-right" class="flex flex-col w-max gap-1">
+                    <div class="heading px-1 py-2">Crease lines</div>
+                    <div class="pref-field">
+                        <label for="stroke">Line thickness</label>
+                        <input type="number" id="stroke" size="2" min="1">
+                    </div>
+                    <div class="heading px-1 py-2">Grid</div>
+                    <div class="pref-field">
+                        <label for="gridline">Toggle gridlines</label>
+                        <input type="checkbox" id="gridline" checked>
+                    </div>
+                    <div class="pref-field">
+                        <label for="segment">Segments</label>
+                        <input type="number" id="segment" size="2" min="1">
+                    </div>
+                    <div class="pref-field">
+                        <label for="gridType">Grid type</label>
+                        <select id="gridType" class="pl-2 py-1">
+                            <option value="square">Square</option>
+                            <option value="isometric">Isometric</option>
+                        </select>
+                    </div>
+                    <div class="pref-field">
+                        <label for="gridAlignment">Grid alignment</label>
+                        <select id="gridAlignment" class="pl-2 py-1">
+                            <option value="bottom">Bottom</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                            <option value="top">Top</option>
+                        </select>
+                    </div>
+                    <div class="pref-field">
+                        <label for="gridIntervalType">Isometric Grid interval type</label>
+                        <select id="gridIntervalType" class="pl-2 py-1">
+                            <option value="base">Base</option>
+                            <option value="height">Height</option>
+                        </select>
+                    </div>
+                    <div class="pref-field">
+                        <label for="diagonalLines">Diagonal Lines</label>
+                        <input type="checkbox" id="diagonalLines">
+                    </div>
+                    <div class="heading px-1 py-2">Draw Settings</div>
+                    <div class="pref-field">
+                        <label for="angleSnapCheckbox">Restrict Angle</label>
+                        <input type="checkbox" id="angleSnapCheckbox">
+                    </div>
+                    <div class="pref-field">
+                        <label for="angleInput">Snap Angle</label>
+                        <select id="angleInput" class="pl-2 py-1">
+                            <option value="15">15°</option>
+                            <option value="22.5">22.5°</option>
+                            <option value="30">30°</option>
+                            <option value="45">45°</option>
+                        </select>
+                    </div>
+                    <div class="pref-field">
+                        <label for="vertexOnlyDraw" >Vertex-only</label>
+                        <input type="checkbox" id="vertexOnlyDraw" class="pl-2 py-1">
+                    </div>
+                </div>
             </div>
         </div>
+        <dialogue id="dialogue" class="w-min min-w-[400px] max-w-[600px] min-h-[200px] max-h-[400px] m-8 rounded-lg centralise bg-white flex flex-col shadow-md invisible">
+            <div class="flex gap-2 justify-between items-center p-4 flex-grow-0">
+                <div class="flex gap-4">
+                    <img id="dialogueIcon" width="24px" src="public/success.svg" alt="success icon">
+                    <div id="dialogue-title" class="text-lg text-onBackground font-bold"></div>
+                </div>
+                <img id="dialogue-close" width="24px" height="24px" class="cursor-pointer" src="./public/close.svg" alt="close button">
+            </div>
+            <div id="dialogue-text" class="text-sm text-onBackgroundVariant px-4 pb-4 flex-grow"></div>
+            <div id="dialogue-btns" class="p-4 flex gap-4 justify-end">
+                <button id="dialogue-btn-left" class="button"></button>
+                <button id="dialogue-btn-right" class="button-filled"></button>
+            </div>
+        </dialogue>
+        <video id="tutorial" class="centralise invisible" width="960" height="540" controls>
+            <source src="./public/tutorial.mp4" type="video/mp4">
+        </video> 
     </div>
-    <div class="w-full h-full absolute left-0 top-0 z-50 hidden" id="overlay">
-        <div class = "h-full w-full absolute bg-black opacity-30" id="overlayBg"></div>
-        <form id ="exportForm" class="p-8 absolute left-[calc(50%-400px)] top-[calc(50%-300px)] w-[800px] h-[500px] bg-slate-100 rounded-xl flex gap-2" action="submit">
-            <img id="close" class="absolute w-10 h-10 p-2 right-0 top-0 cursor-pointer" src="./public/MaterialSymbolsCloseRounded.svg" alt="close button">
-            <div id="exportLeftCol" class="flex flex-col gap-2 basis-1/2">
-                <div class="flex gap-2">
-                    <label for="fileTitle">File name:</label>
-                    <input id="fileTitle" type="text" value="title">
-                </div>
-                <div class="flex gap-2">
-                    <label for="fileAuthor">File author:</label>
-                    <input id="fileAuthor" type="text" value="author">
-                </div>
-                <div class="flex gap-2">
-                    <label for="fileCreator">File creator:</label>
-                    <input id="fileCreator" type="text" value="creator">
-                </div>
-                <div class="flex gap-2">
-                    <label for="fileSpec">File specifications:</label>
-                    <input id="fileSpec" type="text" value="specs">
-                </div>
-                <legend>File classes: </legend>
-                <fieldset id="fileClasses">
-                    <div class="flex gap-2">
-                        <input id="singleModel" name="fileClasses" value="singleModel" type="checkbox">
-                        <label for="singleModel">Single Model</label>
-                    </div>
-                    <div class="flex gap-2">
-                        <input id="multiModel" name="fileClasses" value="multiModel" type="checkbox">
-                        <label for="multiModel">Multi Model</label>
-                    </div>
-                    <div class="flex gap-2">
-                        <input id="animation" name="fileClasses" value="animation" type="checkbox">
-                        <label for="animation">Animation</label>
-                    </div>
-                    <div class="flex gap-2">
-                        <input id="diagrams" name="fileClasses" value="diagrams" type="checkbox">
-                        <label for="diagrams">Diagrams</label>
-                    </div>
-                    <!-- <div class="flex gap-2">
-                        <input id="others" name="fileClasses" type="checkbox">
-                        <input id="othersInput" type="text">
-                    </div> -->
-                </fieldset>
+    <div id="toast" class="success">
+        <div class="flex gap-2 items-center">
+            <img id="toastIcon" width="32px" src="./public/success.svg" alt="success icon">
+            <div id="toastText">Toast Notifications</div>
+        </div>
+        <img id="toastClose" width="20px" class="cursor-pointer" src="./public/close.svg" alt="close button">
+    </div>
+    <img id="sidebarToggle" class="rounded-[25px] shadow" width="50px" src="./public/chevron-up.svg" alt="sidebar toggle button">
+    <div id="sidebarBtns" class="flex flex-col gap-1 md:gap-2 items-end fixed bottom-4 right-4" style="visibility: visible">
+        <a href="https://github.com/kairayzo/Origami-Editor" target="_blank">
+            <div id="githubBtn" class="cursor-pointer sidebar-btn-grp flex gap-1 md:gap-2 items-center">
+                <div class="sidebar-btn-label invisible text-primary text-sm md:text-base">Github page</div>
+                <img width="40px" class="md:w-[50px]" src="./public/github.svg" alt="github logo">
             </div>
-            <div id="exportRightCol" class="flex flex-col grow gap-2">
-                <div>Preview</div>
-                <div id="preview" class="w-[300px] h-[300px] border border-black"></div>
-                <button id="exportBtn" class="w-20">Export</button>
+        </a>
+        <div id="tutorialBtn" class="cursor-pointer sidebar-btn-grp flex gap-1 md:gap-2 items-center">
+            <div class="sidebar-btn-label invisible text-primary text-sm md:text-base">Tutorial</div>
+            <img width="40px" class="md:w-[50px]" src="./public/tutorial.svg" alt="tutorial logo">
+        </div>
+        <a href="https://forms.gle/xURW4Wvu1SiwmhCfA" target="_blank">
+            <div id="surveyBtn" class="cursor-pointer sidebar-btn-grp flex gap-1 md:gap-2 items-center">
+                <div class="sidebar-btn-label invisible text-primary text-sm md:text-base">Feedback</div>
+                <img width="40px" class="md:w-[50px]" src="./public/survey.svg" alt="survey logo">
             </div>
-        </form>
-
+        </a>
+    </div>
+    <img id="helpToggle" class="absolute right-4 bottom-4 cursor-pointer shadow rounded-[25px] origin-center md:block lg:block hidden" width="50px" src="./public/help-close.svg" alt="help button">
+    <div id="helpWindow" class="w-[250px] md:w-[300px] min-h-[100px] p-3 md:p-4 rounded-[8px] absolute bottom-[72px] right-4 bg-scrim flex flex-col gap-2 cursor-default md:flex lg:flex hidden">
+        <div id="helpTitle" class="text-lg font-bold text-onScrim">Help window</div>
+        <div id="helpDesc" class="text-sm font-medium text-onScrim">Hover on tools for instructions</div>
     </div>
 
 </body>

@@ -1,44 +1,44 @@
-import { initialiseForm } from "./Form.js"
-import { generateGrid } from "./Grid.js"
-import { enableShortcuts, generatePlane, resetScreen } from "./Plane.js"
+import { initialiseHistory } from "./backend/history.js";
+import { generateGrid, toggleGrid } from "./edit/Grid.js"
+import trackCoords from "./edit/PointerCoords.js"
+import initialiseTools from "./edit/tools/Toolbar.js"
+import initialiseHeader, { assignTitle } from "./header/Header.js"
+import initialiseHelp from "./notifs/Help.js"
+import initialiseOverlay from "./notifs/Overlay.js"
+import initialiseSidebar from "./sidebar/Sidebar.js"
+import initialisePref from "./windows/Preferences.js"
+import * as backend from "./backend/backend.js"
+import { resetInterface } from "./edit/Plane.js"
 
-export let vertexObj = {}
-export let edgeObj = {}
-export let assignObj = {}
 export const FOLD = require('fold')
-
-export const envVar = {
-    'strokeWidth' : 2,
-    'segment' : 8,
-    'gridlines' : true,
-    'activeFile': '',
-    'edgeType': 'M',
-    'width': 600,
-    'height': 600,
-    'gridVertices': [],
-    'assignmentColor': {
-        'U' : 'yellow',
-        'M' : 'red',
-        'V' : 'blue',
-        'B' : 'black',
-        'F' : 'lightgray'
-    },
-    'defaultViewBox': {x: -50, y: -50, width: 700, height: 700},
-    'activeTool': 'draw'
-}
 
 startup()
 
 function startup() {
-    initialiseForm()
+    initialiseHistory();
+    backend.data.retrieveData()
+    initialisePref()
+    initialiseTools()
+    initialiseHeader()
+    initialiseSidebar()
+    initialiseHelp()
+    initialiseOverlay()
     generateGrid()
-    generatePlane()
-    enableShortcuts()
-    resetScreen()
+    backend.draw.drawPattern()
+    backend.shortcuts.enableShortcuts()
+    trackCoords()
+    backend.shortcuts.setSvgPadding()
+    resetInterface()
 }
 
-export function editObjs(newVertexObj, newEdgeObj, newAssignObj) {
-    vertexObj = structuredClone(newVertexObj)
-    edgeObj = structuredClone(newEdgeObj)
-    assignObj = structuredClone(newAssignObj)
+function render() {
+    generateGrid()
+    toggleGrid()
+    assignTitle()
+    resetInterface()
+    backend.draw.drawPattern()
 }
+
+export { render }
+
+
