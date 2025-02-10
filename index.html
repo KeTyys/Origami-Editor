@@ -8,6 +8,10 @@
     <script src="./src/index.js" type="module" defer></script>
     <link rel="icon" href="./public/logo.svg" sizes="48x48">
     <link href="./src/output.css" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 </head>
 <body style="touch-action: none">
     <div id="root">
@@ -281,5 +285,18 @@
         <div id="helpDesc" class="text-sm font-medium text-onScrim">Hover on tools for instructions</div>
     </div>
 
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('ServiceWorker registration successful');
+            })
+            .catch((err) => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
 </body>
 </html>
