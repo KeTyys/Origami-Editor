@@ -74,22 +74,40 @@ function generateIsometricGridlines() {
     
     backend.dom.clearChildren(grid);
 
-    // Set up transformation based on alignment
+    // Set up transformation based on alignment and interval type
     let transform = '';
-    switch(alignment) {
-        case 'right':
-            transform = `rotate(90) translate(0,-${width})`;
-            break;
-        case 'top':
-            transform = `rotate(180) translate(-${width},-${height})`;
-            break;
-        case 'left':
-            transform = `rotate(270) translate(-${height},0)`;
-            break;
-        case'bottom':
-        default:
-            transform = '';
-            break;
+    
+    if (intervalType === 'height') {
+        switch(alignment) {
+            case 'left':
+                transform = `rotate(180) translate(-${width},-${height})`; // becomes top
+                break;
+            case 'bottom':
+                transform = `rotate(90) translate(0,-${width})`; // becomes left
+                break;
+            case 'right':
+                // becomes bottom, no transform needed
+                break;
+            case 'top':
+                transform = `rotate(270) translate(-${height},0)`; // becomes right
+                break;
+        }
+    } else {
+        switch(alignment) {
+            case 'right':
+                transform = `rotate(90) translate(0,-${width})`;
+                break;
+            case 'bottom':
+                transform = `rotate(180) translate(-${width},-${height})`;
+                break;
+            case 'left':
+                transform = `rotate(270) translate(-${height},0)`;
+                break;
+            case 'top':
+            default:
+                transform = '';
+                break;
+        }
     }
 
     // Apply transformation to grid
@@ -204,21 +222,44 @@ function generateGridVertices(gridType) {
             }
         }
 
-        // Transform vertices based on alignment
-        switch(alignment) {
-            case 'left':
-                newGridVertices = newGridVertices.map(([x, y]) => [y, width - x]);
-                break;
-            case 'top':
-                newGridVertices = newGridVertices.map(([x, y]) => [width - x, height - y]);
-                break;
-            case 'right':
-                newGridVertices = newGridVertices.map(([x, y]) => [height - y, x]);
-                break;
-            case 'bottom':
-            default:
-                // No transformation needed
-                break;
+        // Transform vertices based on alignment and interval type
+        if (intervalType === 'height') {
+            // For height interval, use different alignment mapping
+            switch(alignment) {
+                case 'left':
+                    // 'left' becomes 'top' for height interval
+                    newGridVertices = newGridVertices.map(([x, y]) => [width - x, height - y]);
+                    break;
+                case 'bottom':
+                    // 'top' becomes 'left' for height interval
+                    newGridVertices = newGridVertices.map(([x, y]) => [y, height - x]);
+                    break;
+                case 'right':
+                    // 'right' becomes 'bottom' for height interval
+                    // No transformation needed
+                    break;
+                case 'top':
+                    // 'bottom' becomes 'right' for height interval
+                    newGridVertices = newGridVertices.map(([x, y]) => [height - y, x]);
+                    break;
+            }
+        } else {
+            // Original transformations for base interval type
+            switch(alignment) {
+                case 'left':
+                    newGridVertices = newGridVertices.map(([x, y]) => [y, height - x]);
+                    break;
+                case 'bottom':
+                    newGridVertices = newGridVertices.map(([x, y]) => [width - x, height - y]);
+                    break;
+                case 'right':
+                    newGridVertices = newGridVertices.map(([x, y]) => [height - y, x]);
+                    break;
+                case 'top':
+                default:
+                    // No transformation needed
+                    break;
+            }
         }
     } else {
         // Square grid vertices
@@ -237,14 +278,50 @@ function toggleGrid() {
     backend.dom.toggleElemDisplay(grid, gridOn, 'block')
 }
 
-document.getElementById('gridAlignment').addEventListener('change', (e) => {
-    backend.data.envVar.gridAlignment = e.target.value;
-    generateGrid();
-});
+// Initial setup for grid alignment options
+const intervalType = backend.data.envVar.gridIntervalType || 'base';
+const alignmentSelect = document.getElementById('gridAlignment');
+if (alignmentSelect && intervalType === 'height') {
+    alignmentSelect.options[0].text = "Top";     // Bottom becomes Top
+    alignmentSelect.options[1].text = "Right";   // Left becomes Right
+    alignmentSelect.options[2].text = "Left";    // Right becomes Left
+    alignmentSelect.options[3].text = "Bottom";  // Top becomes Bottom
+}
 
-document.getElementById('gridIntervalType').addEventListener('change', (e) => {
-    backend.data.envVar.gridIntervalType = e.target.value;
-    generateGrid();
-});
+// Add null checks for event listeners
+const gridAlignmentElem = document.getElementById('gridAlignment');
+if (gridAlignmentElem) {
+    gridAlignmentElem.addEventListener('change', (e) => {
+        backend.data.envVar.gridAlignment = e.target.value;
+        generateGrid();
+    });
+}
 
-export { generateGrid, toggleGrid}
+const gridIntervalTypeElem = document.getElementById('gridIntervalType');
+if (gridIntervalTypeElem) {
+    gridIntervalTypeElem.addEventListener('change', (e) => {
+        backend.data.envVar.gridIntervalType = e.target.value;
+        
+        // Update grid alignment dropdown options based on interval type
+        const alignmentSelect = document.getElementById('gridAlignment');
+        if (alignmentSelect) {
+            if (e.target.value === 'height') {
+                // Update options for height interval
+                alignmentSelect.options[0].text = "Top";     // value stays "bottom"
+                alignmentSelect.options[1].text = "Right";   // value stays "left"
+                alignmentSelect.options[2].text = "Left";    // value stays "right"
+                alignmentSelect.options[3].text = "Bottom";  // value stays "top"
+            } else {
+                // Restore original options for base interval
+                alignmentSelect.options[0].text = "Bottom";
+                alignmentSelect.options[1].text = "Left";
+                alignmentSelect.options[2].text = "Right";
+                alignmentSelect.options[3].text = "Top";
+            }
+        }
+        
+        generateGrid();
+    });
+}
+
+export { generateGrid, toggleGrid }

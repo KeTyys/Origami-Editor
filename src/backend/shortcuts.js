@@ -174,40 +174,62 @@ function onScroll(e) {
 }
 
 function onTouchDown(e) {
+    // Cache the touch points
     touchEventCache.push(e)
+
+    if (touchEventCache.length === 2) {
+        // Prevent default zooming
+        e.preventDefault()
+    }
 }
 
 function onTouchMove(e) {
-    // update pointer event
-    let index = touchEventCache.findIndex(
-        (cachedEvent) => cachedEvent.pointerId === e.pointerId
-    )
-    touchEventCache[index] = e
+    // Find this event in the cache and update its record with this event
+    for (let i = 0; i < touchEventCache.length; i++) {
+        if (e.pointerId === touchEventCache[i].pointerId) {
+            touchEventCache[i] = e
+            break
+        }
+    }
 
-    // if two pointers are down, check for pinch gestures
-    if (touchEventCache.length == 2) {
-        // calculate the distance between the two pointers
-        let currDiff = Math.abs(touchEventCache[0].clientX - touchEventCache[1].clientX)
-        // let diffX = Math.abs(touchEventCache[0].clientX - touchEventCache[1].clientX)
-        // let diffY = Math.abs(touchEventCache[0].clientY - touchEventCache[1].clientY)
+    // If two pointers are down, check for pinch gestures
+    if (touchEventCache.length === 2) {
+        // Calculate the distance between the two pointers
+        const currDiff = Math.hypot(
+            touchEventCache[0].clientX - touchEventCache[1].clientX,
+            touchEventCache[0].clientY - touchEventCache[1].clientY
+        )
+
         if (prevDiff > 0) {
+            // Determine zoom direction
             if (currDiff > prevDiff) {
-                console.log('zooming in')
-            } else if (currDiff > prevDiff) {
-                console.log('zooming out')
+                // The distance between the two pointers has increased -> zoom in
+                backend.shortcuts.handleZoom(true)
+            }
+            if (currDiff < prevDiff) {
+                // The distance between the two pointers has decreased -> zoom out
+                backend.shortcuts.handleZoom(false)
             }
         }
-        // cache the distance for the next move event
+
+        // Cache the distance for the next move event
         prevDiff = currDiff
     }
 }
 
 function onTouchUp(e) {
-    // remove touch event
-    let index = touchEventCache.findIndex(
-        (cachedEvent) => cachedEvent.pointerId === e.pointerId
-    )
-    touchEventCache.splice(index, 1)
+    // Remove this touch point from the cache
+    for (let i = 0; i < touchEventCache.length; i++) {
+        if (touchEventCache[i].pointerId === e.pointerId) {
+            touchEventCache.splice(i, 1)
+            break
+        }
+    }
+
+    // If the number of pointers is less than two, reset diff tracker
+    if (touchEventCache.length < 2) {
+        prevDiff = -1
+    }
 }
 
 function disablePointerEvents() {

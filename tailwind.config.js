@@ -8,7 +8,22 @@ module.exports = {
     content: ['./src/**/*.{html,js}',
       './index.html',],
     theme: {
-      extend: {},
+      extend: {
+        screens: {
+          'xs': '320px',
+          'sm': '640px',
+          'md': '768px',
+          'lg': '1024px',
+          'xl': '1280px',
+        },
+        spacing: {
+          'safe-top': 'env(safe-area-inset-top)',
+          'safe-bottom': 'env(safe-area-inset-bottom)',
+          'safe-left': 'env(safe-area-inset-left)',
+          'safe-right': 'env(safe-area-inset-right)',
+          'grid-segment': 'var(--grid-segment)',
+        }
+      },
       colors: {
         primary: '#6750A4',
         onPrimary: colors.white,
@@ -37,9 +52,6 @@ module.exports = {
         black: colors.black,
         white: colors.white
       },
-      spacing: {
-        'grid-segment': 'var(--grid-segment)',
-      }
     },
     plugins: [],
   }
