@@ -321,7 +321,94 @@
         right: 16px;
     }
 
+    #preferences {
+        @apply px-24 py-12 rounded-2xl bg-white flex gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible;
+    }
+
     @media (max-width: 768px) {
+        .selector:active,
+        button:active,
+        .dropdown-item:active {
+            opacity: 0.7;
+        }
+
+        .selector {
+            r: 12px; /* Larger touch target */
+        }
+
+        #tools button {
+            min-width: 44px;
+            min-height: 44px;
+            padding: 8px;
+        }
+
+        .dropdown-item {
+            min-height: 44px;
+            padding: 8px 16px;
+        }
+
+        #tools {
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            justify-content: space-around;
+        }
+
+        #sidebarToggle {
+            top: 16px;
+            right: 16px;
+        }
+
+        #sidebarBtns {
+            top: 64px;
+            right: 16px;
+        }
+
+        #helpWindow {
+            width: 90%;
+            max-width: none;
+        }
+
+        #dialogue {
+            width: 90%;
+            max-width: none;
+        }
+
+        .dropdown {
+            max-height: 50vh;
+        }
+
+        #preferences {
+            @apply px-4 py-6 flex-col w-[95%];
+        }
+
+        #pref-left {
+            @apply flex-row flex-wrap justify-start gap-2;
+        }
+
+        #pref-right {
+            @apply w-full;
+        }
+
+        .pref-field {
+            @apply flex-col gap-1 items-start;
+        }
+
+        .pref-field label {
+            @apply min-w-0 text-sm;
+        }
+
+        .pref-field input, .pref-field select {
+            @apply w-full;
+        }
+
+        .heading {
+            @apply text-xl;
+        }
+    }
+
+    @media (max-width: 1279px) {
         .selector:active,
         button:active,
         .dropdown-item:active {
