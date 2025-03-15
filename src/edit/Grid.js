@@ -246,13 +246,13 @@ function generateGridVertices(gridType) {
         } else {
             // Original transformations for base interval type
             switch(alignment) {
-                case 'left':
+                case 'right':
                     newGridVertices = newGridVertices.map(([x, y]) => [y, height - x]);
                     break;
                 case 'bottom':
                     newGridVertices = newGridVertices.map(([x, y]) => [width - x, height - y]);
                     break;
-                case 'right':
+                case 'left':
                     newGridVertices = newGridVertices.map(([x, y]) => [height - y, x]);
                     break;
                 case 'top':

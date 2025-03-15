@@ -141,15 +141,15 @@
             </div>
             <button type="submit" id="exportBtn" class="button-filled w-max">Export</button>
         </form>
-        <div id="preferences" class="absolute px-24 py-12 rounded-2xl bg-white flex gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible">
-            <img id="pref-close" width="24px" class="absolute right-3 top-3 cursor-pointer" src="./public/close.svg" alt="close button">
-            <div id="pref-left" class="flex flex-col p-2">
+        <div id="preferences" class="absolute px-3 md:px-24 py-8 md:py-12 rounded-2xl bg-white flex flex-col gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible w-[95%] md:w-auto max-h-[90vh] overflow-y-auto">
+            <img id="pref-close" width="24px" class="absolute right-3 top-3 cursor-pointer z-10 bg-white rounded-full p-1" src="./public/close.svg" alt="close button">
+            <div id="pref-left" class="flex flex-col p-3">
                 <div class="pref-section selected">Display</div>
                 <div class="pref-section">
-                    <h3 class="text-base md:text-lg">Reflection Tool</h3>
+                    <h3>Reflection Tool</h3>
                     <div class="pref-field">
                         <label for="sourceQuadrant">Source Quadrant:</label>
-                        <select id="sourceQuadrant" class="w-full md:w-auto">
+                        <select id="sourceQuadrant">
                             <option value="1">Quadrant I</option>
                             <option value="2">Quadrant II</option>
                             <option value="3">Quadrant III</option>
@@ -158,7 +158,7 @@
                     </div>
                     <div class="pref-field">
                         <label for="targetQuadrant">Target Quadrant:</label>
-                        <select id="targetQuadrant" class="w-full md:w-auto">
+                        <select id="targetQuadrant">
                             <option value="1">Quadrant I</option>
                             <option value="2">Quadrant II</option>
                             <option value="3">Quadrant III</option>
@@ -166,37 +166,37 @@
                         </select>
                     </div>
                     <div class="pref-field">
-                        <button type="button" id="reflectButton" class="btn w-full md:w-auto">Reflect</button>
+                        <button type="button" id="reflectButton" class="btn">Reflect</button>
                     </div>
                 </div>
             </div>
-            <div class="flex gap-6 w-full md:w-auto">
-                <div class="bg-black h-full w-0.5 rounded-full hidden md:block"></div>
-                <div id="pref-right" class="flex flex-col w-full md:w-max gap-1">
+            <div class="flex flex-col gap-6">
+                <div class="bg-black h-0.5 w-full md:hidden"></div>
+                <div id="pref-right" class="flex flex-col w-full gap-1">
                     <div class="heading px-1 py-2">Crease lines</div>
                     <div class="pref-field">
                         <label for="stroke">Line thickness</label>
-                        <input type="number" id="stroke" size="2" min="1" class="w-full md:w-auto">
+                        <input type="number" id="stroke" size="2" min="1">
                     </div>
                     <div class="heading px-1 py-2">Grid</div>
                     <div class="pref-field">
                         <label for="gridline">Toggle gridlines</label>
-                        <input type="checkbox" id="gridline" checked class="w-auto">
+                        <input type="checkbox" id="gridline" checked>
                     </div>
                     <div class="pref-field">
                         <label for="segment">Segments</label>
-                        <input type="number" id="segment" size="2" min="1" class="w-full md:w-auto">
+                        <input type="number" id="segment" size="2" min="1">
                     </div>
                     <div class="pref-field">
                         <label for="gridType">Grid type</label>
-                        <select id="gridType" class="w-full md:w-auto pl-2 py-1">
+                        <select id="gridType" class="pl-2 py-1">
                             <option value="square">Square</option>
                             <option value="isometric">Isometric</option>
                         </select>
                     </div>
                     <div class="pref-field">
                         <label for="gridAlignment">Grid alignment</label>
-                        <select id="gridAlignment" class="w-full md:w-auto pl-2 py-1">
+                        <select id="gridAlignment" class="pl-2 py-1">
                             <option value="bottom">Bottom</option>
                             <option value="left">Left</option>
                             <option value="right">Right</option>
@@ -205,23 +205,23 @@
                     </div>
                     <div class="pref-field">
                         <label for="gridIntervalType">Isometric Grid interval type</label>
-                        <select id="gridIntervalType" class="w-full md:w-auto pl-2 py-1">
+                        <select id="gridIntervalType" class="pl-2 py-1">
                             <option value="base">Base</option>
                             <option value="height">Height</option>
                         </select>
                     </div>
                     <div class="pref-field">
                         <label for="diagonalLines">Diagonal Lines</label>
-                        <input type="checkbox" id="diagonalLines" class="w-auto">
+                        <input type="checkbox" id="diagonalLines">
                     </div>
                     <div class="heading px-1 py-2">Draw Settings</div>
                     <div class="pref-field">
                         <label for="angleSnapCheckbox">Restrict Angle</label>
-                        <input type="checkbox" id="angleSnapCheckbox" class="w-auto">
+                        <input type="checkbox" id="angleSnapCheckbox">
                     </div>
                     <div class="pref-field">
                         <label for="angleInput">Snap Angle</label>
-                        <select id="angleInput" class="w-full md:w-auto pl-2 py-1">
+                        <select id="angleInput" class="pl-2 py-1">
                             <option value="15">15°</option>
                             <option value="22.5">22.5°</option>
                             <option value="30">30°</option>
@@ -230,7 +230,7 @@
                     </div>
                     <div class="pref-field">
                         <label for="vertexOnlyDraw">Vertex-only</label>
-                        <input type="checkbox" id="vertexOnlyDraw" class="w-auto pl-2 py-1">
+                        <input type="checkbox" id="vertexOnlyDraw" class="pl-2 py-1">
                     </div>
                 </div>
             </div>
