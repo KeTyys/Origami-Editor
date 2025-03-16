@@ -290,20 +290,32 @@ function onTouchStart(e) {
         const diffY = touchEventCache[0].clientY - touchEventCache[1].clientY
         prevDiff = Math.sqrt(diffX * diffX + diffY * diffY)
         
-        // Store the midpoint for panning
-        pointerOrigin = {
-            x: (touchEventCache[0].clientX + touchEventCache[1].clientX) / 2,
-            y: (touchEventCache[0].clientY + touchEventCache[1].clientY) / 2
-        }
+        // Store the midpoint for panning in SVG coordinates
+        const svg = document.querySelector('#interface')
+        const rect = svg.getBoundingClientRect()
+        const midX = (touchEventCache[0].clientX + touchEventCache[1].clientX) / 2
+        const midY = (touchEventCache[0].clientY + touchEventCache[1].clientY) / 2
+        
+        // Convert screen coordinates to SVG coordinates
+        const point = svg.createSVGPoint()
+        point.x = midX - rect.left
+        point.y = midY - rect.top
+        const svgPoint = point.matrixTransform(svg.getScreenCTM().inverse())
+        
+        pointerOrigin = svgPoint
         isPointerDown = true
 
         // Disable drawing while zooming/panning
         disablePointerEvents()
+        
+        // Stop event propagation to prevent drawing
+        e.stopPropagation()
     }
 }
 
 function onTouchMove(e) {
     e.preventDefault()
+    e.stopPropagation() // Stop event propagation to prevent drawing
 
     if (e.touches.length === 2) {
         // Calculate current distance between touch points for pinch
@@ -311,50 +323,84 @@ function onTouchMove(e) {
         const diffY = e.touches[0].clientY - e.touches[1].clientY
         const currentDiff = Math.sqrt(diffX * diffX + diffY * diffY)
 
-        // Calculate current midpoint for panning
-        const currentMidpoint = {
-            x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-            y: (e.touches[0].clientY + e.touches[1].clientY) / 2
-        }
+        // Calculate current midpoint in SVG coordinates
+        const svg = document.querySelector('#interface')
+        const rect = svg.getBoundingClientRect()
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        
+        // Convert screen coordinates to SVG coordinates
+        const point = svg.createSVGPoint()
+        point.x = midX - rect.left
+        point.y = midY - rect.top
+        const svgPoint = point.matrixTransform(svg.getScreenCTM().inverse())
 
         // Handle pinch zoom
         if (prevDiff > 0 && Math.abs(currentDiff - prevDiff) > 10) {
             const zoomIn = currentDiff > prevDiff
             const zoomFactor = Math.abs(currentDiff - prevDiff) / 200
-            handleZoom(zoomIn, zoomFactor)
+            
+            // Store current dimensions
+            const oldWidth = viewBox.width
+            const oldHeight = viewBox.height
+            
+            // Calculate new dimensions
+            let newWidth = zoomIn ? 
+                viewBox.width - envVar.width * zoomFactor : 
+                viewBox.width + envVar.width * zoomFactor
+            let newHeight = zoomIn ? 
+                viewBox.height - envVar.height * zoomFactor : 
+                viewBox.height + envVar.height * zoomFactor
+
+            // Clamp dimensions
+            newWidth = Math.min(Math.max(envVar.defaultViewBox.width - envVar.width, newWidth), 
+                envVar.defaultViewBox.width + 2 * envVar.width)
+            newHeight = Math.min(Math.max(envVar.defaultViewBox.height - envVar.height, newHeight), 
+                envVar.defaultViewBox.height + 2 * envVar.height)
+
+            // Calculate the scale change
+            const scaleX = newWidth / oldWidth
+            const scaleY = newHeight / oldHeight
+
+            // Update viewBox dimensions
+            viewBox.width = newWidth
+            viewBox.height = newHeight
+
+            // Adjust position to keep the pinch center point stationary
+            viewBox.x = svgPoint.x - (svgPoint.x - viewBox.x) * scaleX
+            viewBox.y = svgPoint.y - (svgPoint.y - viewBox.y) * scaleY
+
             prevDiff = currentDiff
         }
 
         // Handle two-finger pan
         if (isPointerDown && pointerOrigin) {
-            // Get the screen CTM for proper coordinate transformation
-            const svg = document.querySelector('#interface')
-            const svgCTM = svg.getScreenCTM()
+            const dx = svgPoint.x - pointerOrigin.x
+            const dy = svgPoint.y - pointerOrigin.y
             
-            // Calculate the movement in SVG coordinates
-            const dx = (currentMidpoint.x - pointerOrigin.x) / svgCTM.a
-            const dy = (currentMidpoint.y - pointerOrigin.y) / svgCTM.d
-            
-            // Update viewBox
             viewBox.x -= dx
             viewBox.y -= dy
             
-            // Update pointer origin
-            pointerOrigin = currentMidpoint
+            pointerOrigin = svgPoint
         }
     }
 }
 
 function onTouchEnd(e) {
     e.preventDefault()
-    // Reset all tracking variables
-    touchEventCache = []
-    prevDiff = -1
-    isPointerDown = false
-    pointerOrigin = null
+    e.stopPropagation() // Stop event propagation to prevent drawing
 
-    // Re-enable drawing
-    enablePointerEvents()
+    // Only re-enable pointer events if all touches are ended
+    if (e.touches.length === 0) {
+        // Reset all tracking variables
+        touchEventCache = []
+        prevDiff = -1
+        isPointerDown = false
+        pointerOrigin = null
+
+        // Re-enable drawing
+        enablePointerEvents()
+    }
 }
 
 // New function to track cursor position

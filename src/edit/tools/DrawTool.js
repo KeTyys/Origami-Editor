@@ -219,13 +219,13 @@ function handlePointerClick(e) {
 }
 
 function handleTouchMove(e) {
-    e.preventDefault() // Prevent scrolling
-    if (e.touches.length === 1) {
+    e.preventDefault()
+    // Only handle single-touch events for drawing
+    if (e.touches.length === 1 && isDrawingEnabled) {
         const touch = e.touches[0]
-        // Add offset to move cursor above and to the left of the touch point
         const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX - 30, // Offset 30px to the left
-            clientY: touch.clientY - 30, // Offset 30px up
+            clientX: touch.clientX - 30,
+            clientY: touch.clientY - 30,
             bubbles: true
         })
         snapPointer(mouseEvent)
@@ -234,11 +234,12 @@ function handleTouchMove(e) {
 
 function handleTouchEnd(e) {
     e.preventDefault()
-    if (e.changedTouches.length === 1) {
+    // Only handle single-touch events for drawing
+    if (e.changedTouches.length === 1 && isDrawingEnabled && e.touches.length === 0) {
         const touch = e.changedTouches[0]
         const mouseEvent = new MouseEvent('click', {
-            clientX: touch.clientX - 30, // Match the offset from handleTouchMove
-            clientY: touch.clientY - 30, // Match the offset from handleTouchMove
+            clientX: touch.clientX - 30,
+            clientY: touch.clientY - 30,
             bubbles: true
         })
         handlePointerClick(mouseEvent)
