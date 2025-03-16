@@ -128,12 +128,6 @@ function enableShortcuts() {
     svg.addEventListener('mouseleave', onPointerUp) // Mouse gets out of the SVG area
     svg.addEventListener('mousemove', onPointerMove) // Mouse is moving
     svg.addEventListener('wheel', onScroll)
-    svg.addEventListener('pointerdown', onTouchDown)
-    svg.addEventListener('pointermove', onTouchMove)
-    svg.addEventListener('pointerup', onTouchUp)
-    svg.addEventListener('pointercancel', onTouchUp)
-    svg.addEventListener('pointerout', onTouchUp)
-    svg.addEventListener('pointerleave', onTouchUp)
 
     // Add touch event listeners for pinch zoom
     svg.addEventListener('touchstart', onTouchStart)
@@ -141,12 +135,16 @@ function enableShortcuts() {
     svg.addEventListener('touchend', onTouchEnd)
     svg.addEventListener('touchcancel', onTouchEnd)
 
+    // Add mousemove listener to track cursor position even when not dragging
+    svg.addEventListener('mousemove', updateCursorCoord)
+
     return () => {
         // ... existing cleanup ...
         svg.removeEventListener('touchstart', onTouchStart)
         svg.removeEventListener('touchmove', onTouchMove)
         svg.removeEventListener('touchend', onTouchEnd)
         svg.removeEventListener('touchcancel', onTouchEnd)
+        svg.removeEventListener('mousemove', updateCursorCoord)
     }
 }
 
@@ -171,6 +169,11 @@ function onPointerMove (e) {
 function onScroll(e) {
     e.preventDefault()
 
+    // If cursorCoord isn't set, use the event coordinates
+    if (!cursorCoord) {
+        cursorCoord = getPointFromEvent(e)
+    }
+
     // restrict scale
     scale += e.deltaY * -0.001
     scale = Math.min(Math.max(-2, scale), 1)
@@ -185,58 +188,6 @@ function onScroll(e) {
     
     viewBox.x = cursorCoord.x - e.offsetX * envVar.width / svg.children[0].getBoundingClientRect().width + envVar.svgPadding.x * envVar.width / svg.children[0].getBoundingClientRect().width
     viewBox.y = cursorCoord.y - e.offsetY * envVar.height / svg.children[0].getBoundingClientRect().height + envVar.svgPadding.y * envVar.height / svg.children[0].getBoundingClientRect().height
-
-}
-
-function onTouchDown(e) {
-    // Cache the touch points
-    touchEventCache.push(e)
-
-    if (touchEventCache.length === 2) {
-        // Prevent default zooming
-        e.preventDefault()
-    }
-}
-
-function onTouchMove(e) {
-    e.preventDefault()
-
-    if (touchEventCache.length === 2 && e.touches.length === 2) {
-        // Calculate current distance between touch points
-        const diffX = e.touches[0].clientX - e.touches[1].clientX
-        const diffY = e.touches[0].clientY - e.touches[1].clientY
-        const currentDiff = Math.sqrt(diffX * diffX + diffY * diffY)
-
-        // If the distance changed significantly enough (to avoid jitter)
-        if (Math.abs(currentDiff - prevDiff) > 10) {
-            // Determine zoom direction
-            const zoomIn = currentDiff > prevDiff
-
-            // Calculate zoom factor based on the difference
-            const zoomFactor = Math.abs(currentDiff - prevDiff) / 200
-            
-            // Apply zoom
-            handleZoom(zoomIn, zoomFactor)
-
-            // Cache the new difference
-            prevDiff = currentDiff
-        }
-    }
-}
-
-function onTouchUp(e) {
-    // Remove this touch point from the cache
-    for (let i = 0; i < touchEventCache.length; i++) {
-        if (touchEventCache[i].pointerId === e.pointerId) {
-            touchEventCache.splice(i, 1)
-            break
-        }
-    }
-
-    // If the number of pointers is less than two, reset diff tracker
-    if (touchEventCache.length < 2) {
-        prevDiff = -1
-    }
 }
 
 function disablePointerEvents() {
@@ -322,37 +273,78 @@ function handleResetView(e) {
 }
 
 function onTouchStart(e) {
+    e.preventDefault()
+    // Clear the cache first
+    touchEventCache = []
+    
     // Cache the touch points
     for (let i = 0; i < e.touches.length; i++) {
         touchEventCache.push(e.touches[i])
     }
 
-    // If two fingers touched, prevent default to enable pinch
     if (touchEventCache.length === 2) {
-        e.preventDefault()
-        
-        // Calculate initial distance between touch points
+        // Calculate initial distance between touch points for pinch
         const diffX = touchEventCache[0].clientX - touchEventCache[1].clientX
         const diffY = touchEventCache[0].clientY - touchEventCache[1].clientY
         prevDiff = Math.sqrt(diffX * diffX + diffY * diffY)
+        
+        // Store the midpoint for panning
+        pointerOrigin = {
+            x: (touchEventCache[0].clientX + touchEventCache[1].clientX) / 2,
+            y: (touchEventCache[0].clientY + touchEventCache[1].clientY) / 2
+        }
+        isPointerDown = true
+    }
+}
+
+function onTouchMove(e) {
+    e.preventDefault()
+
+    if (e.touches.length === 2) {
+        // Calculate current distance between touch points for pinch
+        const diffX = e.touches[0].clientX - e.touches[1].clientX
+        const diffY = e.touches[0].clientY - e.touches[1].clientY
+        const currentDiff = Math.sqrt(diffX * diffX + diffY * diffY)
+
+        // Calculate current midpoint for panning
+        const currentMidpoint = {
+            x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+            y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+        }
+
+        // Handle pinch zoom
+        if (prevDiff > 0 && Math.abs(currentDiff - prevDiff) > 10) {
+            const zoomIn = currentDiff > prevDiff
+            const zoomFactor = Math.abs(currentDiff - prevDiff) / 200
+            handleZoom(zoomIn, zoomFactor)
+            prevDiff = currentDiff
+        }
+
+        // Handle two-finger pan
+        if (isPointerDown && pointerOrigin) {
+            const dx = currentMidpoint.x - pointerOrigin.x
+            const dy = currentMidpoint.y - pointerOrigin.y
+            
+            viewBox.x -= dx * (viewBox.width / svg.clientWidth)
+            viewBox.y -= dy * (viewBox.height / svg.clientHeight)
+            
+            pointerOrigin = currentMidpoint
+        }
     }
 }
 
 function onTouchEnd(e) {
-    // Remove changed touches from the cache
-    for (let i = 0; i < touchEventCache.length; i++) {
-        if (e.touches.length === 0 || 
-            (touchEventCache[i].identifier !== e.touches[0]?.identifier && 
-             touchEventCache[i].identifier !== e.touches[1]?.identifier)) {
-            touchEventCache.splice(i, 1)
-            i--
-        }
-    }
+    e.preventDefault()
+    // Reset all tracking variables
+    touchEventCache = []
+    prevDiff = -1
+    isPointerDown = false
+    pointerOrigin = null
+}
 
-    // Reset difference tracker if less than 2 touches
-    if (touchEventCache.length < 2) {
-        prevDiff = -1
-    }
+// New function to track cursor position
+function updateCursorCoord(e) {
+    cursorCoord = getPointFromEvent(e)
 }
 
 export { enableShortcuts, handleUndo, handleRedo, handleZoom, handleResetView, setSvgPadding }
