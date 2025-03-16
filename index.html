@@ -62,6 +62,9 @@
                 <div class="tool-button" id="suggest">
                     <img src="./public/suggest.svg" alt="Suggest icon">
                 </div>
+                <div class="tool-button" id="reflect">
+                    <img src="./public/reflect.svg" alt="Reflect icon">
+                </div>
             </div>
             <div class="relative h-[40px] w-[40px] md:h-[50px] md:w-[50px]">
                 <svg id="edgeTypeMenu" width="150" height="150" class="centralise" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none">
@@ -141,34 +144,10 @@
             </div>
             <button type="submit" id="exportBtn" class="button-filled w-max">Export</button>
         </form>
-        <div id="preferences" class="absolute px-3 md:px-24 py-8 md:py-12 rounded-2xl bg-white flex flex-col gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible w-[95%] md:w-auto max-h-[90vh] overflow-y-auto">
+        <div id="preferences" class="absolute px-2 md:px-24 py-8 md:py-12 rounded-2xl bg-white flex flex-col gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible w-[95%] md:w-auto max-h-[90vh] overflow-y-auto">
             <img id="pref-close" width="24px" class="absolute right-3 top-3 cursor-pointer z-10 bg-white rounded-full p-1" src="./public/close.svg" alt="close button">
             <div id="pref-left" class="flex flex-col p-3">
                 <div class="pref-section selected">Display</div>
-                <div class="pref-section">
-                    <h3>Reflection Tool</h3>
-                    <div class="pref-field">
-                        <label for="sourceQuadrant">Source Quadrant:</label>
-                        <select id="sourceQuadrant">
-                            <option value="1">Quadrant I</option>
-                            <option value="2">Quadrant II</option>
-                            <option value="3">Quadrant III</option>
-                            <option value="4">Quadrant IV</option>
-                        </select>
-                    </div>
-                    <div class="pref-field">
-                        <label for="targetQuadrant">Target Quadrant:</label>
-                        <select id="targetQuadrant">
-                            <option value="1">Quadrant I</option>
-                            <option value="2">Quadrant II</option>
-                            <option value="3">Quadrant III</option>
-                            <option value="4">Quadrant IV</option>
-                        </select>
-                    </div>
-                    <div class="pref-field">
-                        <button type="button" id="reflectButton" class="btn">Reflect</button>
-                    </div>
-                </div>
             </div>
             <div class="flex flex-col gap-6">
                 <div class="bg-black h-0.5 w-full md:hidden"></div>
@@ -230,7 +209,7 @@
                     </div>
                     <div class="pref-field">
                         <label for="vertexOnlyDraw">Vertex-only</label>
-                        <input type="checkbox" id="vertexOnlyDraw" class="pl-2 py-1">
+                        <input type="checkbox" id="vertexOnlyDraw" class="pl-2 py-1" checked>
                     </div>
                 </div>
             </div>

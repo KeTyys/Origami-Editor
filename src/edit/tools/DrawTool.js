@@ -38,6 +38,9 @@ function snapToAngle(start, end) {
 export default function setDrawTool() {
     pointer.style.display = 'none'
     
+    // Set vertex-only draw to true by default
+    backend.data.envVar.vertexOnlyDraw = true
+    
     // Add event listener for pointer events state
     events.on('pointerEvents', (enabled) => {
         isDrawingEnabled = enabled

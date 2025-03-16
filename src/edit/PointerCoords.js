@@ -49,7 +49,7 @@ pointerDisplay.parentNode.insertBefore(undoRedoContainer, pointerDisplay.nextSib
 
 export default function trackCoords() {
     // Hide coordinates initially if screen is too narrow
-    if (window.innerWidth < 1279) {
+    if (window.innerWidth < 2000) {
         pointerDisplay.style.display = 'none'
         undoRedoContainer.style.display = 'flex'
     }
@@ -61,7 +61,7 @@ export default function trackCoords() {
 
     // Update visibility on window resize
     window.addEventListener('resize', () => {
-        if (window.innerWidth < 1279) {
+        if (window.innerWidth < 2000) {
             pointerDisplay.style.display = 'none'
             undoRedoContainer.style.display = 'flex'
         } else {
@@ -77,7 +77,7 @@ export default function trackCoords() {
 function updateDisplay(e) {
     e.preventDefault()
     // Only show coordinates if screen is wide enough
-    if (window.innerWidth >= 1279) {
+    if (window.innerWidth >= 2000) {
         pointerDisplay.style.display = 'flex'
         undoRedoContainer.style.display = 'none'
     }
@@ -92,7 +92,7 @@ function updateDisplay(e) {
 function showDisplay(e) {
     e.preventDefault()
     // Only show coordinates if screen is wide enough
-    if (window.innerWidth >= 1279) {
+    if (window.innerWidth >= 2000) {
         pointerDisplay.style.display = 'flex'
         undoRedoContainer.style.display = 'none'
     }
@@ -101,7 +101,7 @@ function showDisplay(e) {
 function hideDisplay(e) {
     e.preventDefault()
     pointerDisplay.style.display = 'none'
-    if (window.innerWidth < 1279) {
+    if (window.innerWidth < 2000) {
         undoRedoContainer.style.display = 'flex'
     }
 }

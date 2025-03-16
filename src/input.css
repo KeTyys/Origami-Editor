@@ -462,4 +462,8 @@
             max-height: 50vh;
         }
     }
+
+    .selected {
+        stroke: #4CAF50 !important;
+    }
 }

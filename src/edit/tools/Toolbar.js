@@ -6,6 +6,7 @@ import { toggleTypesMenu, handleTypeSelect } from "./EdgeTool.js"
 import setSuggestTool from "./SuggestTool.js"
 import { resetInterface } from "../Plane.js"
 import * as backend from "../../backend/backend.js"
+import setReflectTool from './ToolReflect.js'
 
 const tools = document.querySelector('#tools')
 const drawToolBtn = document.querySelector('#draw')
@@ -13,10 +14,20 @@ const bisectorToolBtn = document.querySelector('#bisect')
 const cutToolBtn = document.querySelector('#cut')
 const deleteToolBtn = document.querySelector('#delete')
 const suggestToolBtn = document.querySelector('#suggest')
+const reflectToolBtn = document.querySelector('#reflect')
 const edgeTypeBtn = document.querySelector('#currEdgeType')
 const edgeTypeMenu = document.querySelector('#edgeTypeMenu')
 
 let toolCleanupFunc
+
+const toolHandlers = {
+    'draw': setDrawTool,
+    'bisector': setBisectorTool,
+    'cut': setCutTool,
+    'delete': setDeleteTool,
+    'suggest': setSuggestTool,
+    'reflect': setReflectTool,
+}
 
 export default function initialiseTools() {
     let selectedTool = backend.data.envVar.activeTool
@@ -27,6 +38,7 @@ export default function initialiseTools() {
     cutToolBtn.addEventListener('click', e=> handleToolSelect(e))
     deleteToolBtn.addEventListener('click', e=>handleToolSelect(e))
     suggestToolBtn.addEventListener('click', e=>handleToolSelect(e))
+    reflectToolBtn.addEventListener('click', e=>handleToolSelect(e))
     edgeTypeBtn.addEventListener('click', toggleTypesMenu)
     for (let typeOption of Array.from(edgeTypeMenu.children)) {
         typeOption.addEventListener('click', handleTypeSelect)
@@ -38,12 +50,10 @@ function handleToolSelect(e) {
     const tools = Array.from(document.querySelector('#tools').children)
 
     tools.forEach((tool) => {
-        // console.log(tool.id, selectedTool.id)
         if (tool.id == selectedTool.id) {
             tool.classList.add('selected')
         } else {
             tool.classList.remove('selected')
-
         }
     })
 
@@ -62,6 +72,9 @@ function handleToolSelect(e) {
             break
         case suggestToolBtn:
             backend.data.envVar.activeTool = 'suggest'
+            break
+        case reflectToolBtn:
+            backend.data.envVar.activeTool = 'reflect'
             break
     }
     resetInterface()
@@ -86,6 +99,10 @@ function resetActiveTool() {
             break
         case 'suggest':
             toolCleanupFunc = setSuggestTool()
+            break
+        case 'reflect':
+            toolCleanupFunc = setReflectTool()
+            break
     }
 }
 

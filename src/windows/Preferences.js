@@ -1,7 +1,6 @@
 import { generateGrid, toggleGrid } from "../edit/Grid.js"
 import { initialiseExportForm } from "../windows/ExportForm.js"
 import * as backend from "../backend/backend.js"
-import { reflectAndDrawElements } from "../edit/Reflection.js"
 
 const overlay = document.querySelector('#overlay')
 const prefWindow = document.querySelector('#preferences')
@@ -35,20 +34,6 @@ export default function initialisePref() {
     
     gridTypeInput.addEventListener('change', handleGridTypeChange)
     diagonalLinesInput.addEventListener('change', handleDiagonalLinesChange)
-
-    initializeReflectionTool()
-}
-
-function initializeReflectionTool() {
-    const sourceQuadrant = document.querySelector('#sourceQuadrant')
-    const targetQuadrant = document.querySelector('#targetQuadrant')
-    const reflectButton = document.querySelector('#reflectButton')
-    
-    reflectButton.addEventListener('click', () => {
-        const source = parseInt(sourceQuadrant.value)
-        const target = parseInt(targetQuadrant.value)
-        reflectAndDrawElements(source, target)
-    })
 }
 
 function handleSegmentChange() {
