@@ -21,6 +21,7 @@ let scale = 0
 
 let touchEventCache = []
 let prevDiff = -1
+let initialScale = 1
 
 function enableShortcuts() {
     window.addEventListener('resize', setSvgPadding)
@@ -133,6 +134,20 @@ function enableShortcuts() {
     svg.addEventListener('pointercancel', onTouchUp)
     svg.addEventListener('pointerout', onTouchUp)
     svg.addEventListener('pointerleave', onTouchUp)
+
+    // Add touch event listeners for pinch zoom
+    svg.addEventListener('touchstart', onTouchStart)
+    svg.addEventListener('touchmove', onTouchMove)
+    svg.addEventListener('touchend', onTouchEnd)
+    svg.addEventListener('touchcancel', onTouchEnd)
+
+    return () => {
+        // ... existing cleanup ...
+        svg.removeEventListener('touchstart', onTouchStart)
+        svg.removeEventListener('touchmove', onTouchMove)
+        svg.removeEventListener('touchend', onTouchEnd)
+        svg.removeEventListener('touchcancel', onTouchEnd)
+    }
 }
 
 function onPointerDown(e) {
@@ -184,36 +199,28 @@ function onTouchDown(e) {
 }
 
 function onTouchMove(e) {
-    // Find this event in the cache and update its record with this event
-    for (let i = 0; i < touchEventCache.length; i++) {
-        if (e.pointerId === touchEventCache[i].pointerId) {
-            touchEventCache[i] = e
-            break
-        }
-    }
+    e.preventDefault()
 
-    // If two pointers are down, check for pinch gestures
-    if (touchEventCache.length === 2) {
-        // Calculate the distance between the two pointers
-        const currDiff = Math.hypot(
-            touchEventCache[0].clientX - touchEventCache[1].clientX,
-            touchEventCache[0].clientY - touchEventCache[1].clientY
-        )
+    if (touchEventCache.length === 2 && e.touches.length === 2) {
+        // Calculate current distance between touch points
+        const diffX = e.touches[0].clientX - e.touches[1].clientX
+        const diffY = e.touches[0].clientY - e.touches[1].clientY
+        const currentDiff = Math.sqrt(diffX * diffX + diffY * diffY)
 
-        if (prevDiff > 0) {
+        // If the distance changed significantly enough (to avoid jitter)
+        if (Math.abs(currentDiff - prevDiff) > 10) {
             // Determine zoom direction
-            if (currDiff > prevDiff) {
-                // The distance between the two pointers has increased -> zoom in
-                backend.shortcuts.handleZoom(true)
-            }
-            if (currDiff < prevDiff) {
-                // The distance between the two pointers has decreased -> zoom out
-                backend.shortcuts.handleZoom(false)
-            }
-        }
+            const zoomIn = currentDiff > prevDiff
 
-        // Cache the distance for the next move event
-        prevDiff = currDiff
+            // Calculate zoom factor based on the difference
+            const zoomFactor = Math.abs(currentDiff - prevDiff) / 200
+            
+            // Apply zoom
+            handleZoom(zoomIn, zoomFactor)
+
+            // Cache the new difference
+            prevDiff = currentDiff
+        }
     }
 }
 
@@ -256,26 +263,33 @@ function handleRedo(e) {
     resetInterface()
 }
 
-function handleZoom(zoomin=true) {
+function handleZoom(zoomIn = true, factor = 0.1) {
     const svg = document.querySelector('#interface')
     let viewBox = svg.viewBox.baseVal
     let svgRect = svg.getBoundingClientRect()
 
-    // increase / decrease viewbox width depending on zoom in / out
-    let newWidth = zoomin ? viewBox.width - envVar.width * 0.1 : viewBox.width + envVar.width * 0.1
-    let newHeight = zoomin ? viewBox.height - envVar.height * 0.1 : viewBox.height + envVar.height * 0.1
+    // Calculate new dimensions based on zoom factor
+    let newWidth = zoomIn ? 
+        viewBox.width - envVar.width * factor : 
+        viewBox.width + envVar.width * factor
+    let newHeight = zoomIn ? 
+        viewBox.height - envVar.height * factor : 
+        viewBox.height + envVar.height * factor
 
-    // clamp viewbox width and height with a lower and upper limit
-    newWidth = Math.min(Math.max(envVar.defaultViewBox.width - envVar.width, newWidth), envVar.defaultViewBox.width + 2*envVar.width)
-    newHeight = Math.min(Math.max(envVar.defaultViewBox.height - envVar.height, newHeight), envVar.defaultViewBox.height + 2*envVar.height)
+    // Clamp viewbox width and height
+    newWidth = Math.min(Math.max(envVar.defaultViewBox.width - envVar.width, newWidth), 
+        envVar.defaultViewBox.width + 2 * envVar.width)
+    newHeight = Math.min(Math.max(envVar.defaultViewBox.height - envVar.height, newHeight), 
+        envVar.defaultViewBox.height + 2 * envVar.height)
 
     viewBox.width = newWidth
     viewBox.height = newHeight
 
-    // center viewbox
-    viewBox.x = envVar.width / 2 - svgRect.width / 2 * envVar.width / svg.children[0].getBoundingClientRect().width + envVar.svgPadding.x * envVar.width / svg.children[0].getBoundingClientRect().width
-    viewBox.y = envVar.height / 2 - svgRect.height / 2 * envVar.height / svg.children[0].getBoundingClientRect().height + envVar.svgPadding.y * envVar.height / svg.children[0].getBoundingClientRect().height
-    
+    // Center the viewbox
+    viewBox.x = envVar.width / 2 - svgRect.width / 2 * envVar.width / svg.children[0].getBoundingClientRect().width + 
+        envVar.svgPadding.x * envVar.width / svg.children[0].getBoundingClientRect().width
+    viewBox.y = envVar.height / 2 - svgRect.height / 2 * envVar.height / svg.children[0].getBoundingClientRect().height + 
+        envVar.svgPadding.y * envVar.height / svg.children[0].getBoundingClientRect().height
 }
 
 function setSvgPadding() {
@@ -305,6 +319,40 @@ function handleResetView(e) {
     // Reset position to center
     viewBox.x = (envVar.width - viewBox.width) / 2
     viewBox.y = (envVar.height - viewBox.height) / 2
+}
+
+function onTouchStart(e) {
+    // Cache the touch points
+    for (let i = 0; i < e.touches.length; i++) {
+        touchEventCache.push(e.touches[i])
+    }
+
+    // If two fingers touched, prevent default to enable pinch
+    if (touchEventCache.length === 2) {
+        e.preventDefault()
+        
+        // Calculate initial distance between touch points
+        const diffX = touchEventCache[0].clientX - touchEventCache[1].clientX
+        const diffY = touchEventCache[0].clientY - touchEventCache[1].clientY
+        prevDiff = Math.sqrt(diffX * diffX + diffY * diffY)
+    }
+}
+
+function onTouchEnd(e) {
+    // Remove changed touches from the cache
+    for (let i = 0; i < touchEventCache.length; i++) {
+        if (e.touches.length === 0 || 
+            (touchEventCache[i].identifier !== e.touches[0]?.identifier && 
+             touchEventCache[i].identifier !== e.touches[1]?.identifier)) {
+            touchEventCache.splice(i, 1)
+            i--
+        }
+    }
+
+    // Reset difference tracker if less than 2 touches
+    if (touchEventCache.length < 2) {
+        prevDiff = -1
+    }
 }
 
 export { enableShortcuts, handleUndo, handleRedo, handleZoom, handleResetView, setSvgPadding }
