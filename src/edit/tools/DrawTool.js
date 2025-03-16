@@ -1,4 +1,5 @@
 import * as backend from "../../backend/backend.js"
+import { events } from "../../backend/pubsub.js"
 import { resetInterface } from "../Plane.js"
 
 const interf = document.querySelector('#interface')
@@ -11,6 +12,7 @@ let tempLine = null // Track the temp line
 let angleSnapEnabled = false
 let snapAngle = 15 // default value in degrees
 let vertexOnlyDraw = false // Add this line at the top with other variables
+let isDrawingEnabled = true;
 
 function snapToAngle(start, end) {
     if (!angleSnapEnabled || selectedPointer.length === 0) return end
@@ -35,11 +37,41 @@ function snapToAngle(start, end) {
 
 export default function setDrawTool() {
     pointer.style.display = 'none'
-    interf.addEventListener('mousemove', snapPointer)
-    interf.addEventListener('touchmove', handleTouchMove)
+    
+    // Add event listener for pointer events state
+    events.on('pointerEvents', (enabled) => {
+        isDrawingEnabled = enabled
+        if (!enabled) {
+            if (tempLine) {
+                tempLine.remove()
+                tempLine = null
+            }
+            selectedPointer = []
+            pointer.style.display = 'none'
+        }
+    })
+
+    // Update the handlers to check isDrawingEnabled
+    function handlePointerClickWithCheck(e) {
+        if (!isDrawingEnabled) return
+        handlePointerClick(e)
+    }
+
+    function snapPointerWithCheck(e) {
+        if (!isDrawingEnabled) return
+        snapPointer(e)
+    }
+
+    function handleTouchMoveWithCheck(e) {
+        if (!isDrawingEnabled) return
+        handleTouchMove(e)
+    }
+
+    interf.addEventListener('mousemove', snapPointerWithCheck)
+    interf.addEventListener('touchmove', handleTouchMoveWithCheck)
     interf.addEventListener('mouseleave', removePointer)
     interf.addEventListener('touchend', removePointer)
-    screen.addEventListener('click', handlePointerClick)
+    screen.addEventListener('click', handlePointerClickWithCheck)
     screen.addEventListener('touchend', handleTouchEnd)
     screen.addEventListener('contextmenu', backend.draw.toggleAssign)
 
@@ -60,14 +92,15 @@ export default function setDrawTool() {
         if (tempLine) {
             tempLine.remove()
         }
-        interf.removeEventListener('mousemove', snapPointer)
-        interf.removeEventListener('touchmove', handleTouchMove)
+        interf.removeEventListener('mousemove', snapPointerWithCheck)
+        interf.removeEventListener('touchmove', handleTouchMoveWithCheck)
         interf.removeEventListener('mouseleave', removePointer)
         interf.removeEventListener('touchend', removePointer)
-        screen.removeEventListener('click', handlePointerClick)
+        screen.removeEventListener('click', handlePointerClickWithCheck)
         screen.removeEventListener('touchend', handleTouchEnd)
         screen.removeEventListener('contextmenu', backend.draw.toggleAssign)
         document.removeEventListener('keydown', handleEsc)
+        events.off('pointerEvents')
     }
 }
 

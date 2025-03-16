@@ -193,11 +193,13 @@ function onScroll(e) {
 function disablePointerEvents() {
     const screen = document.querySelector('#screen')
     screen.style.pointerEvents = 'none'
+    events.emit('pointerEvents', false)
 }
 
 function enablePointerEvents() {
     const screen = document.querySelector('#screen')
     screen.style.pointerEvents = ''
+    events.emit('pointerEvents', true)
 }
 
 function handleUndo(e) {
@@ -294,6 +296,9 @@ function onTouchStart(e) {
             y: (touchEventCache[0].clientY + touchEventCache[1].clientY) / 2
         }
         isPointerDown = true
+
+        // Disable drawing while zooming/panning
+        disablePointerEvents()
     }
 }
 
@@ -322,12 +327,19 @@ function onTouchMove(e) {
 
         // Handle two-finger pan
         if (isPointerDown && pointerOrigin) {
-            const dx = currentMidpoint.x - pointerOrigin.x
-            const dy = currentMidpoint.y - pointerOrigin.y
+            // Get the screen CTM for proper coordinate transformation
+            const svg = document.querySelector('#interface')
+            const svgCTM = svg.getScreenCTM()
             
-            viewBox.x -= dx * (viewBox.width / svg.clientWidth)
-            viewBox.y -= dy * (viewBox.height / svg.clientHeight)
+            // Calculate the movement in SVG coordinates
+            const dx = (currentMidpoint.x - pointerOrigin.x) / svgCTM.a
+            const dy = (currentMidpoint.y - pointerOrigin.y) / svgCTM.d
             
+            // Update viewBox
+            viewBox.x -= dx
+            viewBox.y -= dy
+            
+            // Update pointer origin
             pointerOrigin = currentMidpoint
         }
     }
@@ -340,6 +352,9 @@ function onTouchEnd(e) {
     prevDiff = -1
     isPointerDown = false
     pointerOrigin = null
+
+    // Re-enable drawing
+    enablePointerEvents()
 }
 
 // New function to track cursor position
