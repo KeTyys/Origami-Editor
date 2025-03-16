@@ -44,12 +44,13 @@ function addLineMarker(start, end, withDash=false) {
     markers.append(lineMarker)
 }
 
-function addVertSelector(coord, clickHandler, withBorder=false) {
+function addVertSelector(coord, handler, withBorder=false) {
     const vertex = circle(6, 0, 0,
         `transform:translate(${coord[0]}px,${envVar.height - coord[1]}px);
         fill:green;`
     )
-    vertex.addEventListener('click', clickHandler)
+    vertex.addEventListener('click', handler)
+    vertex.addEventListener('touchend', handler)
     vertex.classList.add('selector')
     if (withBorder) {
         vertex.classList.add('with-border')
@@ -59,12 +60,13 @@ function addVertSelector(coord, clickHandler, withBorder=false) {
 
 function addLineSelector(start, end, callback, definedVertices=[], lineId='') {
     const lineSelector = line(start[0], envVar.height - start[1], end[0], envVar.height - end[1], 
-        'stroke:black;stroke-width:1;cursor:pointer')
+        'stroke:green;stroke-width:2;cursor:pointer')
     lineSelector.classList.add('selector')
     if (lineId) {
         lineSelector.setAttribute('data-line-id', lineId)
     }
     lineSelector.addEventListener('click', (e) => callback(e, definedVertices))
+    lineSelector.addEventListener('touchend', (e) => callback(e, definedVertices))
     selectors.appendChild(lineSelector)
 }
 

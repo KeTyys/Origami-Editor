@@ -9,35 +9,56 @@ const selectors = document.querySelector('#selectors')
 
 export default function setBisectorTool() {
     screen.addEventListener('contextmenu', backend.draw.toggleAssign)
+    screen.addEventListener('touchstart', handleTouchStart)
     generateVertSelectors()
 
     return () => {
         screen.removeEventListener('contextmenu', backend.draw.toggleAssign)
+        screen.removeEventListener('touchstart', handleTouchStart)
     }
+}
+
+function handleTouchStart(e) {
+    e.preventDefault()
+    const touch = e.touches[0]
+    const longPressTimer = setTimeout(() => {
+        backend.draw.toggleAssign(e)
+    }, 500)
+    
+    screen.addEventListener('touchend', () => clearTimeout(longPressTimer), { once: true })
 }
 
 function generateVertSelectors() {
     for (let vertex of Object.values(backend.data.vertexObj)) {
         let vertexCoords = backend.draw.scaleUpCoords(vertex)
-        backend.draw.addVertSelector(vertexCoords, handleVertSelectorClick)
+        backend.draw.addVertSelector(vertexCoords, handleVertexSelection)
     }
 }
 
-function handleVertSelectorClick(e) {
-    e.preventDefault();
-    if (e.target) {
-        let selector = e.target.closest('.selector')
-        let selectorCoord = backend.draw.getElemCoord(selector)
-        
-        vertexList.push(selectorCoord)
-        backend.draw.addVertMarker(selectorCoord)
-        selector.remove()
-        generateLineSelectors(vertexList)
+function handleVertexSelection(e) {
+    e.preventDefault()
+    let selector
+    
+    if (e.type === 'touchend') {
+        if (e.changedTouches && e.changedTouches[0]) {
+            const touch = e.changedTouches[0]
+            selector = document.elementFromPoint(touch.clientX, touch.clientY)
+        }
+    } else if (e.type === 'click') {
+        selector = e.target
+    }
 
-        if (vertexList.length == 4) {
-            for (let vertSelector of document.querySelectorAll('circle.selector')) {
-                vertSelector.remove()
-            }
+    if (!selector || !selector.classList.contains('selector')) return
+    
+    let selectorCoord = backend.draw.getElemCoord(selector)
+    vertexList.push(selectorCoord)
+    backend.draw.addVertMarker(selectorCoord)
+    selector.remove()
+    generateLineSelectors(vertexList)
+
+    if (vertexList.length == 4) {
+        for (let vertSelector of document.querySelectorAll('circle.selector')) {
+            vertSelector.remove()
         }
     }
 }
@@ -48,34 +69,28 @@ function generateLineSelectors(vertexList) {
     }
     switch (vertexList.length) {
         case 2:
-            // axiom 1
-            // let lineAcross1 = acrossPts(vertexList[0], vertexList[1])
             let lineBisect = backend.geom.bisectPts(vertexList[0], vertexList[1])
-            backend.draw.addLineSelector(vertexList[0], vertexList[1], handleLineSelectorClick, [vertexList[0], vertexList[1]])
-            // axiom 2
-            // backend.draw.addLineSelector(lineAcross1[0], lineAcross1[1])
+            backend.draw.addLineSelector(vertexList[0], vertexList[1], handleLineSelection, [vertexList[0], vertexList[1]])
             if (lineBisect) {
-                backend.draw.addLineSelector(lineBisect[0], lineBisect[1], handleLineSelectorClick, [])
+                backend.draw.addLineSelector(lineBisect[0], lineBisect[1], handleLineSelection, [])
             }
             break
         case 3:
-            // axiom 3
             let angleBisect = backend.geom.bisectAngle(vertexList[0], vertexList[1], vertexList[2])
             if (angleBisect) {
-                backend.draw.addLineSelector(angleBisect[0], angleBisect[1], handleLineSelectorClick, [vertexList[1]])
+                backend.draw.addLineSelector(angleBisect[0], angleBisect[1], handleLineSelection, [vertexList[1]])
             }
             break
         case 4:
-            // axiom 3
             let bisectLinesRes = backend.geom.bisectLines(vertexList[0], vertexList[1], vertexList[2], vertexList[3])
             if (bisectLinesRes) {
                 let linesBisect1 = bisectLinesRes[0]
                 let linesBisect2 = bisectLinesRes[1]
                 if (linesBisect1) {
-                    backend.draw.addLineSelector(linesBisect1[0], linesBisect1[1], handleLineSelectorClick, [])
+                    backend.draw.addLineSelector(linesBisect1[0], linesBisect1[1], handleLineSelection, [])
                 }
                 if (linesBisect2) {
-                    backend.draw.addLineSelector(linesBisect2[0], linesBisect2[1], handleLineSelectorClick, [])
+                    backend.draw.addLineSelector(linesBisect2[0], linesBisect2[1], handleLineSelection, [])
                 }
             } else {
                 setToast('error', 'No line bisectors found!')
@@ -85,71 +100,81 @@ function generateLineSelectors(vertexList) {
     }
 }
 
-function handleLineSelectorClick(e, definedVertices) {
+function handleLineSelection(e, definedVertices) {
     e.preventDefault()
-    if (e.target) {
-        const lineElem = e.target
-        let x1, x2, y1, y2
-        let intersectPts = []
+    let lineElem
 
-        switch(definedVertices.length) {
-            case 0:
-                backend.dom.clearChildren(markers)
-                backend.dom.clearChildren(selectors)
-                x1 = lineElem.x1.baseVal.value
-                x2 = lineElem.x2.baseVal.value
-                y1 = backend.data.envVar.height - lineElem.y1.baseVal.value
-                y2 = backend.data.envVar.height - lineElem.y2.baseVal.value
-                backend.draw.addLineMarker([x1,y1],[x2,y2], true)
-
-                for (let edgeVal of Object.values(backend.data.edgeObj)) {
-                    let lineStart = backend.data.vertexObj[edgeVal[0]]
-                    let lineEnd = backend.data.vertexObj[edgeVal[1]]
-                    let line = [backend.draw.scaleUpCoords(lineStart), backend.draw.scaleUpCoords(lineEnd)]
-                    let intersectPt = backend.geom.intersect([[x1,y1],[x2,y2]], line)
-                    if (intersectPt && backend.geom.ontop(intersectPt[0],0,backend.data.envVar.width) && backend.geom.ontop(intersectPt[1],0,backend.data.envVar.height) && !backend.helper.inArray(intersectPts, intersectPt)) {
-                        intersectPts.push(intersectPt)
-                    }
-                }
-                if (intersectPts.length == 2) {
-                    confirmLine(intersectPts[0], intersectPts[1])
-                } else {
-                    intersectPts.forEach(intersectPt => {
-                        backend.draw.addVertSelector(intersectPt, (e) => handleAddDefinedVertices(e, definedVertices))
-                    })
-                }
-                break
-            case 1:
-                backend.dom.clearChildren(markers)
-                backend.dom.clearChildren(selectors)
-                x1 = lineElem.x1.baseVal.value
-                x2 = lineElem.x2.baseVal.value
-                y1 = backend.data.envVar.height - lineElem.y1.baseVal.value
-                y2 = backend.data.envVar.height - lineElem.y2.baseVal.value
-                backend.draw.addLineMarker([x1,y1],[x2,y2], true)
-
-                for (let edgeVal of Object.values(backend.data.edgeObj)) {
-                    let lineStart = backend.data.vertexObj[edgeVal[0]]
-                    let lineEnd = backend.data.vertexObj[edgeVal[1]]
-                    let line = [backend.draw.scaleUpCoords(lineStart), backend.draw.scaleUpCoords(lineEnd)]
-                    let intersectPt = backend.geom.intersect([[x1,y1],[x2,y2]], line)
-                    if (intersectPt && !backend.geom.equalCoords(intersectPt, definedVertices[0]) && backend.geom.ontop(intersectPt[0],0,backend.data.envVar.width) && backend.geom.ontop(intersectPt[1],0,backend.data.envVar.height)  && !backend.helper.inArray(intersectPts, intersectPt)) {
-                        intersectPts.push(intersectPt)
-                    }
-                }
-                if (intersectPts.length == 1) {
-                    confirmLine(intersectPts[0], definedVertices[0])
-                } else {
-                    intersectPts.forEach(intersectPt => {
-                        backend.draw.addVertSelector(intersectPt, (e) => handleAddDefinedVertices(e, definedVertices))
-                    })
-                    backend.draw.addVertMarker(definedVertices[0])
-                }
-                break
-            case 2:
-                confirmLine(definedVertices[0], definedVertices[1])
-                break
+    if (e.type === 'touchend') {
+        if (e.changedTouches && e.changedTouches[0]) {
+            const touch = e.changedTouches[0]
+            lineElem = document.elementFromPoint(touch.clientX, touch.clientY)
         }
+    } else if (e.type === 'click') {
+        lineElem = e.target
+    }
+
+    if (!lineElem || !lineElem.classList.contains('selector')) return
+    
+    let x1, x2, y1, y2
+    let intersectPts = []
+
+    switch(definedVertices.length) {
+        case 0:
+            backend.dom.clearChildren(markers)
+            backend.dom.clearChildren(selectors)
+            x1 = lineElem.x1.baseVal.value
+            x2 = lineElem.x2.baseVal.value
+            y1 = backend.data.envVar.height - lineElem.y1.baseVal.value
+            y2 = backend.data.envVar.height - lineElem.y2.baseVal.value
+            backend.draw.addLineMarker([x1,y1],[x2,y2], true)
+
+            for (let edgeVal of Object.values(backend.data.edgeObj)) {
+                let lineStart = backend.data.vertexObj[edgeVal[0]]
+                let lineEnd = backend.data.vertexObj[edgeVal[1]]
+                let line = [backend.draw.scaleUpCoords(lineStart), backend.draw.scaleUpCoords(lineEnd)]
+                let intersectPt = backend.geom.intersect([[x1,y1],[x2,y2]], line)
+                if (intersectPt && backend.geom.ontop(intersectPt[0],0,backend.data.envVar.width) && backend.geom.ontop(intersectPt[1],0,backend.data.envVar.height) && !backend.helper.inArray(intersectPts, intersectPt)) {
+                    intersectPts.push(intersectPt)
+                }
+            }
+            if (intersectPts.length == 2) {
+                confirmLine(intersectPts[0], intersectPts[1])
+            } else {
+                intersectPts.forEach(intersectPt => {
+                    backend.draw.addVertSelector(intersectPt, (e) => handleAddDefinedVertices(e, definedVertices))
+                })
+            }
+            break
+        case 1:
+            backend.dom.clearChildren(markers)
+            backend.dom.clearChildren(selectors)
+            x1 = lineElem.x1.baseVal.value
+            x2 = lineElem.x2.baseVal.value
+            y1 = backend.data.envVar.height - lineElem.y1.baseVal.value
+            y2 = backend.data.envVar.height - lineElem.y2.baseVal.value
+            backend.draw.addLineMarker([x1,y1],[x2,y2], true)
+
+            for (let edgeVal of Object.values(backend.data.edgeObj)) {
+                let lineStart = backend.data.vertexObj[edgeVal[0]]
+                let lineEnd = backend.data.vertexObj[edgeVal[1]]
+                let line = [backend.draw.scaleUpCoords(lineStart), backend.draw.scaleUpCoords(lineEnd)]
+                let intersectPt = backend.geom.intersect([[x1,y1],[x2,y2]], line)
+                if (intersectPt && !backend.geom.equalCoords(intersectPt, definedVertices[0]) && backend.geom.ontop(intersectPt[0],0,backend.data.envVar.width) && backend.geom.ontop(intersectPt[1],0,backend.data.envVar.height)  && !backend.helper.inArray(intersectPts, intersectPt)) {
+                    intersectPts.push(intersectPt)
+                }
+            }
+            if (intersectPts.length == 1) {
+                confirmLine(intersectPts[0], definedVertices[0])
+            } else {
+                intersectPts.forEach(intersectPt => {
+                    backend.draw.addVertSelector(intersectPt, (e) => handleAddDefinedVertices(e, definedVertices))
+                })
+                backend.draw.addVertMarker(definedVertices[0])
+            }
+            break
+        case 2:
+            confirmLine(definedVertices[0], definedVertices[1])
+            break
     }
 }
 
