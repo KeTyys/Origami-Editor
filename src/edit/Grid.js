@@ -290,6 +290,37 @@ if (alignmentSelect && intervalType === 'height') {
 
 // Add null checks for event listeners
 const gridAlignmentElem = document.getElementById('gridAlignment');
+const gridAlignmentContainer = document.getElementById('gridAlignmentContainer');
+const gridIntervalTypeElem = document.getElementById('gridIntervalType');
+const gridIntervalTypeContainer = document.getElementById('gridIntervalTypeContainer');
+const gridTypeElem = document.getElementById('gridType');
+
+function updateGridControls(gridType) {
+    if (gridType === 'square') {
+        // Disable and gray out isometric-specific controls
+        gridAlignmentElem.disabled = true;
+        gridIntervalTypeElem.disabled = true;
+        gridAlignmentContainer.style.opacity = '0.5';
+        gridIntervalTypeContainer.style.opacity = '0.5';
+    } else {
+        // Enable isometric-specific controls
+        gridAlignmentElem.disabled = false;
+        gridIntervalTypeElem.disabled = false;
+        gridAlignmentContainer.style.opacity = '1';
+        gridIntervalTypeContainer.style.opacity = '1';
+    }
+}
+
+if (gridTypeElem) {
+    gridTypeElem.addEventListener('change', (e) => {
+        backend.data.envVar.gridType = e.target.value;
+        updateGridControls(e.target.value);
+        generateGrid();
+    });
+    // Initialize controls state based on current grid type
+    updateGridControls(gridTypeElem.value);
+}
+
 if (gridAlignmentElem) {
     gridAlignmentElem.addEventListener('change', (e) => {
         backend.data.envVar.gridAlignment = e.target.value;
@@ -297,7 +328,6 @@ if (gridAlignmentElem) {
     });
 }
 
-const gridIntervalTypeElem = document.getElementById('gridIntervalType');
 if (gridIntervalTypeElem) {
     gridIntervalTypeElem.addEventListener('change', (e) => {
         backend.data.envVar.gridIntervalType = e.target.value;

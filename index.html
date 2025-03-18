@@ -147,11 +147,19 @@
         <div id="preferences" class="absolute px-2 md:px-24 py-8 md:py-12 rounded-2xl bg-white flex flex-col gap-6 left-1/2 translate-x-[-50%] top-1/2 translate-y-[-50%] shadow-2xl invisible w-[95%] md:w-auto max-h-[90vh] overflow-y-auto">
             <img id="pref-close" width="24px" class="absolute right-3 top-3 cursor-pointer z-10 bg-white rounded-full p-1" src="./public/close.svg" alt="close button">
             <div id="pref-left" class="flex flex-col p-3">
-                <div class="pref-section selected">Display</div>
+                <div class="pref-section selected">Preferences</div>
             </div>
             <div class="flex flex-col gap-6">
                 <div class="bg-black h-0.5 w-full md:hidden"></div>
                 <div id="pref-right" class="flex flex-col w-full gap-1">
+                    <div class="heading px-1 py-2">Touch Settings</div>
+                    <div class="pref-field">
+                        <label for="touchOffset">Touch cursor offset</label>
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="touchOffset" min="-100" max="100" value="-30" class="w-32">
+                            <span id="touchOffsetValue" class="text-sm w-[60px]">-30px</span>
+                        </div>
+                    </div>
                     <div class="heading px-1 py-2">Crease lines</div>
                     <div class="pref-field">
                         <label for="stroke">Line thickness</label>
@@ -173,7 +181,7 @@
                             <option value="isometric">Isometric</option>
                         </select>
                     </div>
-                    <div class="pref-field">
+                    <div class="pref-field" id="gridAlignmentContainer">
                         <label for="gridAlignment">Grid alignment</label>
                         <select id="gridAlignment" class="pl-2 py-1">
                             <option value="bottom">Bottom</option>
@@ -182,7 +190,7 @@
                             <option value="top">Top</option>
                         </select>
                     </div>
-                    <div class="pref-field">
+                    <div class="pref-field" id="gridIntervalTypeContainer">
                         <label for="gridIntervalType">Isometric Grid interval type</label>
                         <select id="gridIntervalType" class="pl-2 py-1">
                             <option value="base">Base</option>

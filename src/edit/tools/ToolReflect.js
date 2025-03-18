@@ -28,7 +28,7 @@ export default function setReflectTool() {
         }
     })
 
-    showPerimeterPointSelectors()
+    showAllSelectablePoints()
 
     const handleEsc = (e) => {
         if (e.key === 'Escape') {
@@ -82,7 +82,7 @@ function handleLineSelect(e) {
         // Show point selectors after at least one line is selected
         if (selectedLines.size > 0 && !isSelectingPoints) {
             isSelectingPoints = true
-            showPerimeterPointSelectors()
+            showAllSelectablePoints()
         } else if (selectedLines.size === 0) {
             isSelectingPoints = false
             backend.dom.clearChildren(selectors)
@@ -90,19 +90,40 @@ function handleLineSelect(e) {
     }
 }
 
-function showPerimeterPointSelectors() {
+function showAllSelectablePoints() {
     backend.dom.clearChildren(selectors)
     
+    // Add all grid vertices as selectable points
     if (backend.data.envVar.gridVertices) {
         backend.data.envVar.gridVertices.forEach(vertex => {
-            if (vertex[0] === 0 || 
-                vertex[0] === backend.data.envVar.width ||
-                vertex[1] === 0 || 
-                vertex[1] === backend.data.envVar.height) {
-                backend.draw.addVertSelector(vertex, handlePointSelect, true)
-            }
+            backend.draw.addVertSelector(vertex, handlePointSelect, true)
         })
     }
+
+    // Add intersection points between lines
+    const edges = Object.values(backend.data.edgeObj)
+    for (let i = 0; i < edges.length; i++) {
+        const edge1 = edges[i]
+        const start1 = backend.draw.scaleUpCoords(backend.data.vertexObj[edge1[0]])
+        const end1 = backend.draw.scaleUpCoords(backend.data.vertexObj[edge1[1]])
+
+        for (let j = i + 1; j < edges.length; j++) {
+            const edge2 = edges[j]
+            const start2 = backend.draw.scaleUpCoords(backend.data.vertexObj[edge2[0]])
+            const end2 = backend.draw.scaleUpCoords(backend.data.vertexObj[edge2[1]])
+
+            const intersectPt = backend.geom.intersect([start1, end1], [start2, end2])
+            if (intersectPt) {
+                backend.draw.addVertSelector(intersectPt, handlePointSelect, true)
+            }
+        }
+    }
+
+    // Add existing vertices as selectable points
+    Object.values(backend.data.vertexObj).forEach(vertex => {
+        const scaledVertex = backend.draw.scaleUpCoords(vertex)
+        backend.draw.addVertSelector(scaledVertex, handlePointSelect, true)
+    })
 }
 
 function handlePointSelect(e) {

@@ -13,6 +13,22 @@ let angleSnapEnabled = false
 let snapAngle = 15 // default value in degrees
 let vertexOnlyDraw = false // Add this line at the top with other variables
 let isDrawingEnabled = true;
+let touchOffset = -30 // Default touch offset
+
+// Add touch offset slider functionality
+const touchOffsetSlider = document.getElementById('touchOffset')
+const touchOffsetValue = document.getElementById('touchOffsetValue')
+
+if (touchOffsetSlider && touchOffsetValue) {
+    // Initialize the value display
+    touchOffsetValue.textContent = `${touchOffsetSlider.value}px`
+    
+    // Update the value when slider changes
+    touchOffsetSlider.addEventListener('input', (e) => {
+        touchOffset = parseInt(e.target.value)
+        touchOffsetValue.textContent = `${touchOffset}px`
+    })
+}
 
 function snapToAngle(start, end) {
     if (!angleSnapEnabled || selectedPointer.length === 0) return end
@@ -227,8 +243,8 @@ function handleTouchMove(e) {
     if (e.touches.length === 1 && isDrawingEnabled) {
         const touch = e.touches[0]
         const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX - 30,
-            clientY: touch.clientY - 30,
+            clientX: touch.clientX + touchOffset,
+            clientY: touch.clientY + touchOffset,
             bubbles: true
         })
         snapPointer(mouseEvent)
@@ -241,8 +257,8 @@ function handleTouchEnd(e) {
     if (e.changedTouches.length === 1 && isDrawingEnabled && e.touches.length === 0) {
         const touch = e.changedTouches[0]
         const mouseEvent = new MouseEvent('click', {
-            clientX: touch.clientX - 30,
-            clientY: touch.clientY - 30,
+            clientX: touch.clientX + touchOffset,
+            clientY: touch.clientY + touchOffset,
             bubbles: true
         })
         handlePointerClick(mouseEvent)
