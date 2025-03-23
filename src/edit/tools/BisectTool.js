@@ -1,31 +1,47 @@
 import setToast from "../../notifs/Toast.js"
 import * as backend from "../../backend/backend.js"
 import { resetInterface } from "../Plane.js"
+import { TouchCursor } from './TouchCursor.js'
 
 const vertexList = []
 const screen = document.querySelector('#screen')
 const markers = document.querySelector('#markers')
 const selectors = document.querySelector('#selectors')
 
-export default function setBisectorTool() {
+export default function setBisectorTool(editor) {
+    const touchCursor = new TouchCursor(editor)
     screen.addEventListener('contextmenu', backend.draw.toggleAssign)
-    screen.addEventListener('touchstart', handleTouchStart)
+    
+    const touchStartHandler = (e) => onTouchStart(e, touchCursor)
+    screen.addEventListener('touchstart', touchStartHandler)
+
     generateVertSelectors()
 
     return () => {
         screen.removeEventListener('contextmenu', backend.draw.toggleAssign)
-        screen.removeEventListener('touchstart', handleTouchStart)
+        screen.removeEventListener('touchstart', touchStartHandler)
     }
 }
 
-function handleTouchStart(e) {
+function onTouchStart(e, touchCursor) {
     e.preventDefault()
+    touchCursor.startTouch(e)
     const touch = e.touches[0]
     const longPressTimer = setTimeout(() => {
         backend.draw.toggleAssign(e)
     }, 500)
     
-    screen.addEventListener('touchend', () => clearTimeout(longPressTimer), { once: true })
+    const touchEndHandler = () => {
+        touchCursor.endTouch()
+        clearTimeout(longPressTimer)
+    }
+    
+    screen.addEventListener('touchend', touchEndHandler, { once: true })
+    screen.addEventListener('touchmove', (e) => onTouchMove(e, touchCursor))
+}
+
+function onTouchMove(e, touchCursor) {
+    touchCursor.updateCursor(e)
 }
 
 function generateVertSelectors() {
@@ -195,4 +211,9 @@ function confirmLine(start, end) {
     backend.draw.addLine(start, end)
     vertexList.length = 0
     generateVertSelectors()
+}
+
+function render(ctx) {
+    // ... existing render code ...
+    touchCursor.renderCursor(ctx)
 }
