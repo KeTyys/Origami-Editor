@@ -4,16 +4,24 @@ import setToast from "../../notifs/Toast.js"
 
 const screen = document.querySelector('#screen')
 const plane = document.querySelector('#plane')
-const markers = document.querySelector('#markers')
+const markers = document.querySelector('#selectors')
 const selectors = document.querySelector('#selectors')
+const pointer = document.querySelector('#pointer')
+const interf = document.querySelector('#interface')
 
 let selectedLines = new Set()
 let selectedPoints = []
 let isSelectingPoints = false
+let touchOffset = -30 // Default touch offset
+let lastHoveredElement = null
 
 export default function setReflectTool() {
+    pointer.style.display = 'none'
     // Start in line selection mode
     screen.style.display = 'none'
+    interf.addEventListener('touchmove', handleTouchMove)
+    interf.addEventListener('touchend', handleTouchEnd)
+    
     Array.from(plane.children).forEach(line => {
         if (line.tagName.toLowerCase() === 'line') {
             // Remove existing click handlers first
@@ -39,7 +47,85 @@ export default function setReflectTool() {
     document.addEventListener('keydown', handleEsc)
 
     return () => {
+        pointer.style.display = 'none'
+        interf.removeEventListener('touchmove', handleTouchMove)
+        interf.removeEventListener('touchend', handleTouchEnd)
         cleanupTool()
+    }
+}
+
+function handleTouchMove(e) {
+    e.preventDefault()
+    if (e.touches.length === 1) {
+        const touch = e.touches[0]
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX + touchOffset,
+            clientY: touch.clientY + touchOffset,
+            bubbles: true
+        })
+        snapPointer(mouseEvent)
+        
+        // Check what element is under the pointer
+        const element = document.elementFromPoint(touch.clientX + touchOffset, touch.clientY + touchOffset)
+        if (element && (element.classList.contains('selector') || element.closest('.selector'))) {
+            lastHoveredElement = element.classList.contains('selector') ? element : element.closest('.selector')
+        } else {
+            lastHoveredElement = null
+        }
+    }
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault()
+    pointer.style.display = 'none'
+    
+    if (lastHoveredElement) {
+        // Create and dispatch a click event on the hovered element
+        const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+        })
+        lastHoveredElement.dispatchEvent(clickEvent)
+        lastHoveredElement = null
+    }
+}
+
+function snapPointer(e) {
+    e.preventDefault()
+    let pointerPosition = backend.draw.getPointFromEvent(e)
+    let x = pointerPosition.x
+    let y = backend.data.envVar.height - pointerPosition.y
+    let cursorCoord = [x, y]
+    let snapToVert = false
+
+    // find min distance to any grid vertex or edge vertex
+    let distPtMap = {}
+    if (backend.data.envVar.gridlines) {
+        for (let gridVertex of backend.data.envVar.gridVertices) {
+            distPtMap[backend.geom.distTo([x, y], gridVertex)] = gridVertex
+        }
+    }
+    for (let vertexCoord of Object.values(backend.data.vertexObj)) {
+        let scaledCoord = backend.draw.scaleUpCoords(vertexCoord)
+        distPtMap[backend.geom.distTo([x, y], scaledCoord)] = scaledCoord
+    }
+
+    let minDist = Math.min(...Object.keys(distPtMap))
+    if (minDist < 12) {
+        cursorCoord = distPtMap[minDist]
+        snapToVert = true
+    }
+
+    let newX = cursorCoord[0]
+    let newY = backend.data.envVar.height - cursorCoord[1]
+
+    pointer.style.display = 'block'
+    pointer.style.transform = `translate(${newX}px, ${newY}px)`
+    if (snapToVert) {
+        pointer.classList.add('with-border')
+    } else {
+        pointer.classList.remove('with-border')
     }
 }
 
@@ -93,13 +179,9 @@ function handleLineSelect(e) {
 function showAllSelectablePoints() {
     backend.dom.clearChildren(selectors)
     
-    // Add all grid vertices as selectable points
-    if (backend.data.envVar.gridVertices) {
-        backend.data.envVar.gridVertices.forEach(vertex => {
-            backend.draw.addVertSelector(vertex, handlePointSelect, true)
-        })
-    }
-
+    // Set to keep track of points we've already added (using string coordinates for comparison)
+    const addedPoints = new Set()
+    
     // Add intersection points between lines
     const edges = Object.values(backend.data.edgeObj)
     for (let i = 0; i < edges.length; i++) {
@@ -114,7 +196,12 @@ function showAllSelectablePoints() {
 
             const intersectPt = backend.geom.intersect([start1, end1], [start2, end2])
             if (intersectPt) {
-                backend.draw.addVertSelector(intersectPt, handlePointSelect, true)
+                // Round coordinates to prevent floating-point comparison issues
+                const pointKey = `${Math.round(intersectPt[0] * 1000) / 1000},${Math.round(intersectPt[1] * 1000) / 1000}`
+                if (!addedPoints.has(pointKey)) {
+                    backend.draw.addVertSelector(intersectPt, handlePointSelect, true)
+                    addedPoints.add(pointKey)
+                }
             }
         }
     }
@@ -122,7 +209,11 @@ function showAllSelectablePoints() {
     // Add existing vertices as selectable points
     Object.values(backend.data.vertexObj).forEach(vertex => {
         const scaledVertex = backend.draw.scaleUpCoords(vertex)
-        backend.draw.addVertSelector(scaledVertex, handlePointSelect, true)
+        const pointKey = `${Math.round(scaledVertex[0] * 1000) / 1000},${Math.round(scaledVertex[1] * 1000) / 1000}`
+        if (!addedPoints.has(pointKey)) {
+            backend.draw.addVertSelector(scaledVertex, handlePointSelect, true)
+            addedPoints.add(pointKey)
+        }
     })
 }
 

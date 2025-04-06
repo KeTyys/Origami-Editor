@@ -22,7 +22,7 @@ let toolCleanupFunc
 
 const toolHandlers = {
     'draw': setDrawTool,
-    'bisector': setBisectorTool,
+    'bisect': setBisectorTool,
     'cut': setCutTool,
     'delete': setDeleteTool,
     'suggest': setSuggestTool,
@@ -32,7 +32,9 @@ const toolHandlers = {
 export default function initialiseTools() {
     let selectedTool = backend.data.envVar.activeTool
     const selectedToolElem = tools.querySelector(`#${selectedTool}`)
-    selectedToolElem.classList.add('selected')
+    if (selectedToolElem) {
+        selectedToolElem.classList.add('selected')
+    }
     drawToolBtn.addEventListener('click', e => handleToolSelect(e))
     bisectorToolBtn.addEventListener('click', e=>handleToolSelect(e))
     cutToolBtn.addEventListener('click', e=> handleToolSelect(e))
@@ -57,23 +59,23 @@ function handleToolSelect(e) {
         }
     })
 
-    switch(selectedTool) {
-        case drawToolBtn: 
+    switch(selectedTool.id) {
+        case 'draw': 
             backend.data.envVar.activeTool = 'draw'
             break
-        case bisectorToolBtn:
-            backend.data.envVar.activeTool = 'bisector'
+        case 'bisect':
+            backend.data.envVar.activeTool = 'bisect'
             break
-        case cutToolBtn:
+        case 'cut':
             backend.data.envVar.activeTool = 'cut'
             break
-        case deleteToolBtn:
+        case 'delete':
             backend.data.envVar.activeTool = 'delete'
             break
-        case suggestToolBtn:
+        case 'suggest':
             backend.data.envVar.activeTool = 'suggest'
             break
-        case reflectToolBtn:
+        case 'reflect':
             backend.data.envVar.activeTool = 'reflect'
             break
     }
@@ -88,7 +90,7 @@ function resetActiveTool() {
         case 'draw':
             toolCleanupFunc = setDrawTool()
             break
-        case 'bisector':
+        case 'bisect':
             toolCleanupFunc = setBisectorTool()
             break
         case 'cut':
