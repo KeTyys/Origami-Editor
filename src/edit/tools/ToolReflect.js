@@ -179,10 +179,10 @@ function handleLineSelect(e) {
 function showAllSelectablePoints() {
     backend.dom.clearChildren(selectors)
     
-    // Set to keep track of points we've already added (using string coordinates for comparison)
+    
     const addedPoints = new Set()
     
-    // Add intersection points between lines
+   
     const edges = Object.values(backend.data.edgeObj)
     for (let i = 0; i < edges.length; i++) {
         const edge1 = edges[i]
@@ -206,7 +206,7 @@ function showAllSelectablePoints() {
         }
     }
 
-    // Add existing vertices as selectable points
+    
     Object.values(backend.data.vertexObj).forEach(vertex => {
         const scaledVertex = backend.draw.scaleUpCoords(vertex)
         const pointKey = `${Math.round(scaledVertex[0] * 1000) / 1000},${Math.round(scaledVertex[1] * 1000) / 1000}`
@@ -256,11 +256,11 @@ function performReflection() {
         const startVertex = backend.draw.scaleUpCoords(backend.data.vertexObj[edge[0]])
         const endVertex = backend.draw.scaleUpCoords(backend.data.vertexObj[edge[1]])
         
-        // Reflect both points of the line
+        
         const reflectedStart = reflectPoint(startVertex, midpoint, dx, dy)
         const reflectedEnd = reflectPoint(endVertex, midpoint, dx, dy)
         
-        // Only add the reflected line if both points are within the grid bounds
+        
         if (isWithinGrid(reflectedStart) && isWithinGrid(reflectedEnd)) {
             backend.draw.addLine(reflectedStart, reflectedEnd, backend.data.assignObj[lineId])
         }
@@ -298,7 +298,7 @@ function reflectPoint(point, midpoint, dx, dy) {
     return [rx, ry]
 }
 
-// Add CSS for selected lines
+
 const style = document.createElement('style')
 style.textContent = `
 .selected {
