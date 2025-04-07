@@ -21,9 +21,10 @@
         padding: 0;
         margin: 0;
         /* overflow: hidden; */
-        touch-action: manipulation;
+        touch-action: pan-x pan-y;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
+        -webkit-text-size-adjust: none;
     }
 
     .centralise {
@@ -124,8 +125,10 @@
     #interface {
         width: 100vw;
         height: calc(100vh - var(--header-height));
-        touch-action: manipulation;
+        touch-action: none;
         -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -ms-touch-action: none;
     }
 
     #screen {
@@ -331,6 +334,18 @@
     }
 
     @media (max-width: 768px) {
+        html {
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        #interface {
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
         .selector:active,
         button:active,
         .dropdown-item:active {

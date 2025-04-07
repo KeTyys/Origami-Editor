@@ -12,6 +12,21 @@ const interf = document.querySelector('#interface')
 let touchOffset = -30 // Default touch offset
 let lastHoveredElement = null
 
+// Add touch offset slider functionality
+const touchOffsetSlider = document.getElementById('touchOffset')
+const touchOffsetValue = document.getElementById('touchOffsetValue')
+
+if (touchOffsetSlider && touchOffsetValue) {
+    // Initialize the value display
+    touchOffsetValue.textContent = `${touchOffsetSlider.value}px`
+    
+    // Update the value when slider changes
+    touchOffsetSlider.addEventListener('input', (e) => {
+        touchOffset = parseInt(e.target.value)
+        touchOffsetValue.textContent = `${touchOffset}px`
+    })
+}
+
 export default function setBisectorTool() {
     pointer.style.display = 'none'
     screen.addEventListener('contextmenu', backend.draw.toggleAssign)
@@ -38,8 +53,11 @@ function handleTouchMove(e) {
         })
         snapPointer(mouseEvent)
         
-        // Check what element is under the pointer
-        const element = document.elementFromPoint(touch.clientX + touchOffset, touch.clientY + touchOffset)
+        // Check what element is under the pointer with offset
+        const element = document.elementFromPoint(
+            touch.clientX + touchOffset, 
+            touch.clientY + touchOffset
+        )
         if (element && (element.classList.contains('selector') || element.closest('.selector'))) {
             lastHoveredElement = element.classList.contains('selector') ? element : element.closest('.selector')
         } else {
@@ -116,7 +134,10 @@ function handleVertexSelection(e) {
     if (e.type === 'touchend') {
         if (e.changedTouches && e.changedTouches[0]) {
             const touch = e.changedTouches[0]
-            selector = document.elementFromPoint(touch.clientX, touch.clientY)
+            selector = document.elementFromPoint(
+                touch.clientX + touchOffset, 
+                touch.clientY + touchOffset
+            )
         }
     } else if (e.type === 'click') {
         selector = e.target
@@ -181,7 +202,10 @@ function handleLineSelection(e, definedVertices) {
     if (e.type === 'touchend') {
         if (e.changedTouches && e.changedTouches[0]) {
             const touch = e.changedTouches[0]
-            lineElem = document.elementFromPoint(touch.clientX, touch.clientY)
+            lineElem = document.elementFromPoint(
+                touch.clientX + touchOffset, 
+                touch.clientY + touchOffset
+            )
         }
     } else if (e.type === 'click') {
         lineElem = e.target

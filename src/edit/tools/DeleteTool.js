@@ -8,6 +8,21 @@ const interf = document.querySelector('#interface')
 let touchOffset = -30 // Default touch offset
 let lastHoveredElement = null
 
+// Add touch offset slider functionality
+const touchOffsetSlider = document.getElementById('touchOffset')
+const touchOffsetValue = document.getElementById('touchOffsetValue')
+
+if (touchOffsetSlider && touchOffsetValue) {
+    // Initialize the value display
+    touchOffsetValue.textContent = `${touchOffsetSlider.value}px`
+    
+    // Update the value when slider changes
+    touchOffsetSlider.addEventListener('input', (e) => {
+        touchOffset = parseInt(e.target.value)
+        touchOffsetValue.textContent = `${touchOffset}px`
+    })
+}
+
 export default function setDeleteTool() {
     pointer.style.display = 'none'
     screen.style.display = 'none'

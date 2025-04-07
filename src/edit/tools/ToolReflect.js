@@ -15,6 +15,21 @@ let isSelectingPoints = false
 let touchOffset = -30 // Default touch offset
 let lastHoveredElement = null
 
+// Add touch offset slider functionality
+const touchOffsetSlider = document.getElementById('touchOffset')
+const touchOffsetValue = document.getElementById('touchOffsetValue')
+
+if (touchOffsetSlider && touchOffsetValue) {
+    // Initialize the value display
+    touchOffsetValue.textContent = `${touchOffsetSlider.value}px`
+    
+    // Update the value when slider changes
+    touchOffsetSlider.addEventListener('input', (e) => {
+        touchOffset = parseInt(e.target.value)
+        touchOffsetValue.textContent = `${touchOffset}px`
+    })
+}
+
 export default function setReflectTool() {
     pointer.style.display = 'none'
     // Start in line selection mode
@@ -150,11 +165,20 @@ function cleanupTool() {
 
 function handleLineSelect(e) {
     e.preventDefault()
-    e.stopPropagation() // Stop event from bubbling up
+    e.stopPropagation()
     
-    let lineElem = e.type === 'touchend' ? 
-        document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) :
-        e.target
+    let lineElem;
+    if (e.type === 'touchend') {
+        if (e.changedTouches && e.changedTouches[0]) {
+            const touch = e.changedTouches[0]
+            lineElem = document.elementFromPoint(
+                touch.clientX + touchOffset, 
+                touch.clientY + touchOffset
+            )
+        }
+    } else {
+        lineElem = e.target
+    }
 
     if (lineElem && lineElem.tagName.toLowerCase() === 'line') {
         if (selectedLines.has(lineElem.id)) {
@@ -179,10 +203,10 @@ function handleLineSelect(e) {
 function showAllSelectablePoints() {
     backend.dom.clearChildren(selectors)
     
-    
+    // Set to keep track of points we've already added (using string coordinates for comparison)
     const addedPoints = new Set()
     
-   
+    // Add intersection points between lines
     const edges = Object.values(backend.data.edgeObj)
     for (let i = 0; i < edges.length; i++) {
         const edge1 = edges[i]
@@ -206,7 +230,7 @@ function showAllSelectablePoints() {
         }
     }
 
-    
+    // Add existing vertices as selectable points
     Object.values(backend.data.vertexObj).forEach(vertex => {
         const scaledVertex = backend.draw.scaleUpCoords(vertex)
         const pointKey = `${Math.round(scaledVertex[0] * 1000) / 1000},${Math.round(scaledVertex[1] * 1000) / 1000}`
@@ -219,10 +243,20 @@ function showAllSelectablePoints() {
 
 function handlePointSelect(e) {
     e.preventDefault()
-    let selector = e.type === 'touchend' ? 
-        document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) :
-        e.target
-
+    let selector;
+    
+    if (e.type === 'touchend') {
+        if (e.changedTouches && e.changedTouches[0]) {
+            const touch = e.changedTouches[0]
+            selector = document.elementFromPoint(
+                touch.clientX + touchOffset, 
+                touch.clientY + touchOffset
+            )
+        }
+    } else {
+        selector = e.target
+    }
+    
     if (selector && selector.classList.contains('selector')) {
         let coord = backend.draw.getElemCoord(selector)
         selectedPoints.push(coord)
@@ -256,11 +290,11 @@ function performReflection() {
         const startVertex = backend.draw.scaleUpCoords(backend.data.vertexObj[edge[0]])
         const endVertex = backend.draw.scaleUpCoords(backend.data.vertexObj[edge[1]])
         
-        
+        // Reflect both points of the line
         const reflectedStart = reflectPoint(startVertex, midpoint, dx, dy)
         const reflectedEnd = reflectPoint(endVertex, midpoint, dx, dy)
         
-        
+        // Only add the reflected line if both points are within the grid bounds
         if (isWithinGrid(reflectedStart) && isWithinGrid(reflectedEnd)) {
             backend.draw.addLine(reflectedStart, reflectedEnd, backend.data.assignObj[lineId])
         }
@@ -298,7 +332,7 @@ function reflectPoint(point, midpoint, dx, dy) {
     return [rx, ry]
 }
 
-
+// Add CSS for selected lines
 const style = document.createElement('style')
 style.textContent = `
 .selected {

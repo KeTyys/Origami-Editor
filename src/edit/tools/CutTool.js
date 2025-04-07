@@ -12,6 +12,21 @@ const interf = document.querySelector('#interface')
 let touchOffset = -30 // Default touch offset
 let lastHoveredElement = null
 
+// Add touch offset slider functionality
+const touchOffsetSlider = document.getElementById('touchOffset')
+const touchOffsetValue = document.getElementById('touchOffsetValue')
+
+if (touchOffsetSlider && touchOffsetValue) {
+    // Initialize the value display
+    touchOffsetValue.textContent = `${touchOffsetSlider.value}px`
+    
+    // Update the value when slider changes
+    touchOffsetSlider.addEventListener('input', (e) => {
+        touchOffset = parseInt(e.target.value)
+        touchOffsetValue.textContent = `${touchOffset}px`
+    })
+}
+
 export default function setCutTool() {
     pointer.style.display = 'none'
     screen.addEventListener('contextmenu', backend.draw.toggleAssign)
@@ -110,8 +125,22 @@ function generateVertSelectors() {
 
 function handleVertSelectorClick(e) {
     e.preventDefault();
-    if (e.target) {
-        let selector = e.target.closest('.selector')
+    let selector;
+    
+    if (e.type === 'touchend') {
+        if (e.changedTouches && e.changedTouches[0]) {
+            const touch = e.changedTouches[0]
+            selector = document.elementFromPoint(
+                touch.clientX + touchOffset, 
+                touch.clientY + touchOffset
+            )
+        }
+    } else {
+        selector = e.target
+    }
+    
+    if (selector) {
+        selector = selector.closest('.selector')
         let selectorCoord = backend.draw.getElemCoord(selector)
         if (!vertexList.includes(selectorCoord)) {
             vertexList.push(selectorCoord)
@@ -176,8 +205,21 @@ function generateLineSelectors(vertexList) {
 
 function handleLineSelectorClick(e, definedVertices) {
     e.preventDefault()
-    if (e.target) {
-        const lineElem = e.target
+    let lineElem;
+    
+    if (e.type === 'touchend') {
+        if (e.changedTouches && e.changedTouches[0]) {
+            const touch = e.changedTouches[0]
+            lineElem = document.elementFromPoint(
+                touch.clientX + touchOffset, 
+                touch.clientY + touchOffset
+            )
+        }
+    } else {
+        lineElem = e.target
+    }
+    
+    if (lineElem) {
         let x1, x2, y1, y2
         let intersectPts = []
         switch(definedVertices.length) {
